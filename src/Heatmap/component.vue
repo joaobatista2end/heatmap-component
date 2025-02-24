@@ -29,49 +29,66 @@ const containerRef = ref<HTMLElement | null>(null);
 let heatmapInstance: HeatMap | null = null;
 let panzoomInstance: ReturnType<typeof panzoom> | null = null;
 
-const initHeatmap = () => {
-  const container = containerRef.value?.querySelector('#heatmap');
+const updateHeatmapData = () => {
+  if (!heatmapInstance) return;
+
+  const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
   if (!container) return;
 
-  // Inicializa o heatmap
+  heatmapInstance.setData({
+    max: max.value,
+    min: min.value,
+    data: data.value
+  });
+};
+
+// Watch para atualizar os dados quando mudarem
+watch(data, () => {
+  updateHeatmapData();
+}, { deep: true });
+
+const initHeatmap = () => {
+  const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
+  if (!container) return;
+
   heatmapInstance = new HeatMap({
     container,
     ...props.config,
   });
 
-  // Define os dados iniciais
   updateHeatmapData();
 
-  // Aguarda a criação do canvas pelo heatmap
   nextTick(() => {
     const heatmapCanvas = container.querySelector('canvas');
     if (!heatmapCanvas) return;
 
-    // Configura o panzoom no canvas do heatmap
     panzoomInstance = panzoom(heatmapCanvas, {
       maxZoom: 4,
       minZoom: 0.5,
       bounds: true,
       boundsPadding: 0.1,
-      smoothScroll: true,
+      smoothScroll: false,
       transformOrigin: { x: 0, y: 0 },
     });
 
-    // Atualiza o heatmap quando o zoom muda
+    let isTransforming = false;
     panzoomInstance.on('transform', () => {
-      if (!heatmapInstance || !container) return;
+      if (isTransforming) return;
+      isTransforming = true;
 
-      const { scale } = panzoomInstance!.getTransform();
-      if (heatmapInstance.renderer) {
-        const containerElement = container as HTMLElement;
-        const width = containerElement.offsetWidth * scale;
-        const height = containerElement.offsetHeight * scale;
-        heatmapInstance.renderer.setDimensions(width, height);
-        updateHeatmapData();
-      }
+      requestAnimationFrame(() => {
+        if (heatmapInstance?.renderer) {
+          const { scale } = panzoomInstance!.getTransform();
+          heatmapInstance.renderer.setDimensions(
+            container.offsetWidth,
+            container.offsetHeight
+          );
+          updateHeatmapData();
+        }
+        isTransforming = false;
+      });
     });
 
-    // Ajusta o estilo do canvas para interação
     heatmapCanvas.style.cursor = 'grab';
     heatmapCanvas.addEventListener('mousedown', () => {
       heatmapCanvas.style.cursor = 'grabbing';
@@ -81,21 +98,6 @@ const initHeatmap = () => {
     });
   });
 };
-
-const updateHeatmapData = () => {
-  if (!heatmapInstance) return;
-
-  heatmapInstance.setData({
-    max: max.value,
-    min: min.value,
-    data: data.value,
-  });
-};
-
-// Watch para atualizar os dados quando mudarem
-watch(data, () => {
-  updateHeatmapData();
-}, { deep: true });
 
 onMounted(() => {
   if (containerRef.value) {
@@ -130,10 +132,14 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   position: relative;
+  overflow: hidden;
 }
 
 :deep(canvas) {
   transform-origin: 0 0 !important;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 </style>
 
