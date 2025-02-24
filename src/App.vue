@@ -17,27 +17,12 @@ const generatePoints = () => {
 };
 
 const heatmapData = ref<DataPoint[]>(generatePoints());
-
-// Configuração opcional do heatmap
-const heatmapConfig = {
-  radius: 30,
-  maxOpacity: 0.8,
-  minOpacity: 0.3,
-  blur: 0.85,
-  gradient: {
-    0.4: "blue",
-    0.6: "cyan",
-    0.8: "yellow",
-    1.0: "red",
-  },
-};
 </script>
 
 <template>
   <div class="app-container">
     <Heatmap
       v-model:data="heatmapData"
-      :config="heatmapConfig"
       class="heatmap-demo"
     />
   </div>

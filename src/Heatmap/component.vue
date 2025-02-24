@@ -8,26 +8,12 @@
 import HeatMap from "heatmap-ts";
 import type { DataPoint } from "heatmap-ts";
 import { computed, onMounted, onUnmounted, ref, nextTick, watch } from "vue";
-import { HEATMAP_DEFAULT_CONFIG } from "./conts";
+import { CURSOR_DEFAULT_STYLES, HEATMAP_DEFAULT_CONFIG, PANZOOM_DEFAULT_CONFIG } from "./conts";
 import type { HeatmapProps } from "./types";
 import panzoom from "panzoom";
 import "./styles.css";
 
-// Configurações do Panzoom
-const PANZOOM_CONFIG = {
-  maxZoom: 4,
-  minZoom: 0.5,
-  bounds: true,
-  boundsPadding: 0.1,
-  smoothScroll: false,
-  transformOrigin: { x: 0, y: 0 }
-} as const;
 
-// Configurações de cursor
-const CURSOR_STYLES = {
-  default: 'grab',
-  dragging: 'grabbing'
-} as const;
 
 // Props e Model
 const props = withDefaults(defineProps<Omit<HeatmapProps, "dataValue">>(), {
@@ -63,17 +49,17 @@ const updateHeatmapData = () => {
 };
 
 const setupCursorEvents = (canvas: HTMLElement) => {
-  canvas.style.cursor = CURSOR_STYLES.default;
+  canvas.style.cursor = CURSOR_DEFAULT_STYLES.default;
   canvas.addEventListener('mousedown', () => {
-    canvas.style.cursor = CURSOR_STYLES.dragging;
+    canvas.style.cursor = CURSOR_DEFAULT_STYLES.dragging;
   });
   canvas.addEventListener('mouseup', () => {
-    canvas.style.cursor = CURSOR_STYLES.default;
+    canvas.style.cursor = CURSOR_DEFAULT_STYLES.default;
   });
 };
 
 const setupPanzoom = (container: HTMLElement, canvas: HTMLElement) => {
-  panzoomInstance = panzoom(canvas, PANZOOM_CONFIG);
+  panzoomInstance = panzoom(canvas, PANZOOM_DEFAULT_CONFIG);
 
   let isTransforming = false;
   panzoomInstance.on('transform', () => {
@@ -99,6 +85,7 @@ const initHeatmap = () => {
 
   heatmapInstance = new HeatMap({
     container,
+    ...HEATMAP_DEFAULT_CONFIG,
     ...props.config,
   });
 
