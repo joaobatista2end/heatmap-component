@@ -12,8 +12,7 @@ import { CURSOR_DEFAULT_STYLES, HEATMAP_DEFAULT_CONFIG, PANZOOM_DEFAULT_CONFIG }
 import type { HeatmapProps } from "./types";
 import panzoom from "panzoom";
 import "./styles.css";
-
-
+import { normalizeData } from "./utils";
 
 // Props e Model
 const props = withDefaults(defineProps<Omit<HeatmapProps, "dataValue">>(), {
@@ -30,10 +29,6 @@ const containerRef = ref<HTMLElement | null>(null);
 let heatmapInstance: HeatMap | null = null;
 let panzoomInstance: ReturnType<typeof panzoom> | null = null;
 
-// Computed values
-const max = computed(() => Math.max(...data.value.map((d) => d.value)));
-const min = computed(() => Math.min(...data.value.map((d) => d.value)));
-
 // Adicionar computed values para dimensões
 const dimensions = computed(() => {
   if (!data.value.length) return { width: 0, height: 0 };
@@ -46,6 +41,9 @@ const dimensions = computed(() => {
     height: maxY + 100 // Adiciona margem
   };
 });
+
+// Computed para dados normalizados
+const normalizedData = computed(() => normalizeData(data.value));
 
 // Métodos
 const updateHeatmapData = () => {
@@ -61,9 +59,9 @@ const updateHeatmapData = () => {
   }
 
   heatmapInstance.setData({
-    max: max.value,
-    min: min.value,
-    data: data.value
+    max: 100, // Valor máximo fixo após normalização
+    min: 0,   // Valor mínimo fixo após normalização
+    data: normalizedData.value
   });
 };
 

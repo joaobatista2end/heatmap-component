@@ -1,17 +1,17 @@
 import type { Config } from "heatmap-ts";
 
 export const HEATMAP_DEFAULT_CONFIG: Config = {
-  radius: 30,
-  maxOpacity: 0.8,
-  minOpacity: 0.3,
-  blur: 0.85,
+  radius: 50,
+  maxOpacity: 0.6,
+  minOpacity: 0.1,
+  blur: 0.75,
   gradient: {
     0.4: "blue",
     0.6: "cyan",
     0.8: "yellow",
     1.0: "red",
   },
-}
+};
 
 // Configurações do Panzoom
 export const PANZOOM_DEFAULT_CONFIG = {
