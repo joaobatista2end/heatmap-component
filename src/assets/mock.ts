@@ -1,3 +1,5 @@
+import type { DataPoint } from 'heatmap-ts';
+
 export const map = {
   _id: "24",
   label: "image89.png",
@@ -367,3 +369,9 @@ export const points: MockPoint[] = [
     tempo_permanencia_media: 88,
   },
 ];
+
+export const mockData: DataPoint[] = points.map(point => ({
+  x: point.posicao[0],
+  y: point.posicao[1],
+  value: point.quantidade
+}));

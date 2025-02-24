@@ -1,8 +1,8 @@
 import type { Config, DataPoint } from "heatmap-ts"
 
 export type HeatmapProps = {
-    dataValue: DataPoint[],
+    data: DataPoint[],
     config?: Config,
-    backgroundImage?: File | string
+    backgroundImage?: string | null
 }
 

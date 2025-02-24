@@ -11,6 +11,8 @@
   "dependencies": {
     "heatmap-ts": "^0.0.5",
     "heatmap.js": "^2.0.1",
+    "interactjs": "^1.10.27",
+    "panzoom": "^9.4.3",
     "visual-heatmap": "^2.1.0",
     "vue": "^3.5.13"
   },
@@ -20,5 +22,8 @@
     "typescript": "~5.7.2",
     "vite": "^6.1.0",
     "vue-tsc": "^2.2.0"
+  },
+  "volta": {
+    "node": "23.8.0"
   }
 }

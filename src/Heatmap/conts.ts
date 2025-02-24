@@ -1,7 +1,7 @@
 import type { Config } from "heatmap-ts";
 
 export const HEATMAP_DEFAULT_CONFIG: Config = {
-  radius: 50,
+  radius: 220,
   maxOpacity: 0.6,
   minOpacity: 0.1,
   blur: 0.75,
@@ -18,7 +18,7 @@ export const PANZOOM_DEFAULT_CONFIG = {
   maxZoom: 4,
   minZoom: 0.5,
   bounds: true,
-  boundsPadding: 0.1,
+  boundsPadding: 0.5,
   smoothScroll: false,
   transformOrigin: { x: 0, y: 0 }
 };

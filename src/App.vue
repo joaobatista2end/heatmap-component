@@ -1,45 +1,30 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import Heatmap from './Heatmap/component.vue';
+import { Heatmap } from './Heatmap';
 import type { DataPoint } from 'heatmap-ts';
-import { points } from './assets/mock';
+import { mockData } from './assets/mock';
 
-// Função para normalizar os pontos
-const generatePoints = () => {
-  const maxX = Math.max(...points.map(p => p.posicao[0]));
-  const maxY = Math.max(...points.map(p => p.posicao[1]));
-  const maxValue = Math.max(...points.map(p => p.quantidade));
+// Dados do heatmap
+const heatmapData = ref<DataPoint[]>(mockData);
 
-  const scaleX = 1200 / maxX;
-  const scaleY = 1200 / maxY;
-
-  return points.map(point => ({
-    x: Math.floor(point.posicao[0] * scaleX),
-    y: Math.floor(point.posicao[1] * scaleY),
-    value: Math.floor((point.quantidade / maxValue) * 100)
-  }));
-};
-
-const heatmapData = ref<DataPoint[]>(generatePoints());
+// Imagem de fundo
+const backgroundImage = ref('/src/assets/home.png');
 </script>
 
 <template>
   <div class="app-container">
     <Heatmap
       v-model:data="heatmapData"
-      class="heatmap-demo"
+      :backgroundImage="backgroundImage"
     />
   </div>
 </template>
 
-<style scoped>
+<style>
 .app-container {
+  width: 900px;
+  height: 900px;
   padding: 20px;
-}
-
-.heatmap-demo {
-  width: 600px;
-  height: 600px;
-  margin: 0 auto;
+  box-sizing: border-box;
 }
 </style>

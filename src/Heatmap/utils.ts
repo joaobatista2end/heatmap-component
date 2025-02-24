@@ -1,18 +1,14 @@
 import type { DataPoint } from "heatmap-ts";
 
-export const normalizeData = (rawData: DataPoint[], targetSize: number = 1200) => {
-  if (!rawData.length) return rawData;
+export const normalizeData = (rawData: DataPoint[], imageDimensions?: { width: number, height: number }) => {
+  if (!rawData.length || !imageDimensions) return rawData;
 
-  const maxX = Math.max(...rawData.map(p => p.x));
-  const maxY = Math.max(...rawData.map(p => p.y));
   const maxValue = Math.max(...rawData.map(p => p.value));
 
-  const scaleX = targetSize / maxX;
-  const scaleY = targetSize / maxY;
-
+  // Apenas normaliza o valor, mantendo as coordenadas x,y originais
   return rawData.map(point => ({
-    x: Math.floor(point.x * scaleX),
-    y: Math.floor(point.y * scaleY),
+    x: point.x,
+    y: point.y,
     value: Math.floor((point.value / maxValue) * 100)
   }));
 };
