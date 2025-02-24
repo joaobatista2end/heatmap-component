@@ -4,7 +4,13 @@ export const map = {
   url: "https://i.imgur.com/UnmPeL3.png",
 };
 
-export const points = [
+export interface MockPoint {
+  posicao: [number, number];
+  quantidade: number;
+  tempo_permanencia_media: number;
+}
+
+export const points: MockPoint[] = [
   {
     posicao: [5376, 3588],
     quantidade: 9337,

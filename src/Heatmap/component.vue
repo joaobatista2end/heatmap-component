@@ -34,12 +34,31 @@ let panzoomInstance: ReturnType<typeof panzoom> | null = null;
 const max = computed(() => Math.max(...data.value.map((d) => d.value)));
 const min = computed(() => Math.min(...data.value.map((d) => d.value)));
 
+// Adicionar computed values para dimensões
+const dimensions = computed(() => {
+  if (!data.value.length) return { width: 0, height: 0 };
+
+  const maxX = Math.max(...data.value.map(point => point.x));
+  const maxY = Math.max(...data.value.map(point => point.y));
+
+  return {
+    width: maxX + 100, // Adiciona margem
+    height: maxY + 100 // Adiciona margem
+  };
+});
+
 // Métodos
 const updateHeatmapData = () => {
   if (!heatmapInstance) return;
 
   const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
   if (!container) return;
+
+  // Atualiza as dimensões do container baseado nos pontos
+  if (heatmapInstance.renderer) {
+    const { width, height } = dimensions.value;
+    heatmapInstance.renderer.setDimensions(width, height);
+  }
 
   heatmapInstance.setData({
     max: max.value,
@@ -83,10 +102,14 @@ const initHeatmap = () => {
   const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
   if (!container) return;
 
+  const { width, height } = dimensions.value;
+
   heatmapInstance = new HeatMap({
     container,
     ...HEATMAP_DEFAULT_CONFIG,
     ...props.config,
+    width,
+    height
   });
 
   updateHeatmapData();

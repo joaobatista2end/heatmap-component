@@ -2,18 +2,22 @@
 import { ref } from 'vue';
 import Heatmap from './Heatmap/component.vue';
 import type { DataPoint } from 'heatmap-ts';
+import { points } from './assets/mock';
 
-// Gera mais pontos de exemplo
+// Função para normalizar os pontos
 const generatePoints = () => {
-  const points: DataPoint[] = [];
-  for (let i = 0; i < 200; i++) {
-    points.push({
-      x: Math.floor(Math.random() * 800),
-      y: Math.floor(Math.random() * 600),
-      value: Math.random() * 100
-    });
-  }
-  return points;
+  const maxX = Math.max(...points.map(p => p.posicao[0]));
+  const maxY = Math.max(...points.map(p => p.posicao[1]));
+  const maxValue = Math.max(...points.map(p => p.quantidade));
+
+  const scaleX = 1200 / maxX;
+  const scaleY = 1200 / maxY;
+
+  return points.map(point => ({
+    x: Math.floor(point.posicao[0] * scaleX),
+    y: Math.floor(point.posicao[1] * scaleY),
+    value: Math.floor((point.quantidade / maxValue) * 100)
+  }));
 };
 
 const heatmapData = ref<DataPoint[]>(generatePoints());
