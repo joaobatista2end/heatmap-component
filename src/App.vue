@@ -22,9 +22,11 @@ const backgroundImage = ref('/src/assets/home.png');
 
 <style>
 .app-container {
-  width: 900px;
-  height: 900px;
+  width: 1200px;
+  height: 1200px;
   padding: 20px;
+  margin: 0 auto;
+  overflow: hidden;
   box-sizing: border-box;
 }
 </style>

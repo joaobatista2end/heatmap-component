@@ -16,7 +16,7 @@ export const HEATMAP_DEFAULT_CONFIG: Config = {
 // Configurações do Panzoom
 export const PANZOOM_DEFAULT_CONFIG = {
   maxZoom: 4,
-  minZoom: 0.5,
+  minZoom: 0.1,
   bounds: true,
   boundsPadding: 0.5,
   smoothScroll: false,
