@@ -1,31 +1,56 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+import Heatmap from './Heatmap/component.vue';
+import type { DataPoint } from 'heatmap-ts';
+
+// Gera mais pontos de exemplo
+const generatePoints = () => {
+  const points: DataPoint[] = [];
+  for (let i = 0; i < 200; i++) {
+    points.push({
+      x: Math.floor(Math.random() * 800),
+      y: Math.floor(Math.random() * 600),
+      value: Math.random() * 100
+    });
+  }
+  return points;
+};
+
+const heatmapData = ref<DataPoint[]>(generatePoints());
+
+// Configuração opcional do heatmap
+const heatmapConfig = {
+  radius: 30,
+  maxOpacity: 0.8,
+  minOpacity: 0.3,
+  blur: 0.85,
+  gradient: {
+    0.4: "blue",
+    0.6: "cyan",
+    0.8: "yellow",
+    1.0: "red",
+  },
+};
+</script>
+
 <template>
-  <div class="container">
-    <heatmap v-model:data="heatmapData"></heatmap>
+  <div class="app-container">
+    <Heatmap
+      v-model:data="heatmapData"
+      :config="heatmapConfig"
+      class="heatmap-demo"
+    />
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue';
-import { Heatmap } from './Heatmap';
-import { points } from './assets/mock';
-import type { DataPoint } from 'heatmap-ts';
+<style scoped>
+.app-container {
+  padding: 20px;
+}
 
-const data = points.map((val ): DataPoint => {
-  return {
-    value: val.quantidade,
-    x: val.posicao[1],
-    y: val.posicao[0],
-  }
-})
-const heatmapData = ref(data);
-</script>
-
-<style>
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 800px;
-  width: 800px;
+.heatmap-demo {
+  width: 600px;
+  height: 600px;
+  margin: 0 auto;
 }
 </style>
