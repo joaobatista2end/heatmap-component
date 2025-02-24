@@ -11,8 +11,25 @@ import { computed, onMounted, onUnmounted, ref, nextTick, watch } from "vue";
 import { HEATMAP_DEFAULT_CONFIG } from "./conts";
 import type { HeatmapProps } from "./types";
 import panzoom from "panzoom";
-import "./style.css";
+import "./styles.css";
 
+// Configurações do Panzoom
+const PANZOOM_CONFIG = {
+  maxZoom: 4,
+  minZoom: 0.5,
+  bounds: true,
+  boundsPadding: 0.1,
+  smoothScroll: false,
+  transformOrigin: { x: 0, y: 0 }
+} as const;
+
+// Configurações de cursor
+const CURSOR_STYLES = {
+  default: 'grab',
+  dragging: 'grabbing'
+} as const;
+
+// Props e Model
 const props = withDefaults(defineProps<Omit<HeatmapProps, "dataValue">>(), {
   config: () => HEATMAP_DEFAULT_CONFIG,
 });
@@ -22,13 +39,16 @@ const data = defineModel("data", {
   default: () => [],
 });
 
-const max = computed(() => Math.max(...data.value.map((d) => d.value)));
-const min = computed(() => Math.min(...data.value.map((d) => d.value)));
-
+// Refs e instâncias
 const containerRef = ref<HTMLElement | null>(null);
 let heatmapInstance: HeatMap | null = null;
 let panzoomInstance: ReturnType<typeof panzoom> | null = null;
 
+// Computed values
+const max = computed(() => Math.max(...data.value.map((d) => d.value)));
+const min = computed(() => Math.min(...data.value.map((d) => d.value)));
+
+// Métodos
 const updateHeatmapData = () => {
   if (!heatmapInstance) return;
 
@@ -42,10 +62,36 @@ const updateHeatmapData = () => {
   });
 };
 
-// Watch para atualizar os dados quando mudarem
-watch(data, () => {
-  updateHeatmapData();
-}, { deep: true });
+const setupCursorEvents = (canvas: HTMLElement) => {
+  canvas.style.cursor = CURSOR_STYLES.default;
+  canvas.addEventListener('mousedown', () => {
+    canvas.style.cursor = CURSOR_STYLES.dragging;
+  });
+  canvas.addEventListener('mouseup', () => {
+    canvas.style.cursor = CURSOR_STYLES.default;
+  });
+};
+
+const setupPanzoom = (container: HTMLElement, canvas: HTMLElement) => {
+  panzoomInstance = panzoom(canvas, PANZOOM_CONFIG);
+
+  let isTransforming = false;
+  panzoomInstance.on('transform', () => {
+    if (isTransforming) return;
+    isTransforming = true;
+
+    requestAnimationFrame(() => {
+      if (heatmapInstance?.renderer) {
+        heatmapInstance.renderer.setDimensions(
+          container.offsetWidth,
+          container.offsetHeight
+        );
+        updateHeatmapData();
+      }
+      isTransforming = false;
+    });
+  });
+};
 
 const initHeatmap = () => {
   const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
@@ -62,43 +108,15 @@ const initHeatmap = () => {
     const heatmapCanvas = container.querySelector('canvas');
     if (!heatmapCanvas) return;
 
-    panzoomInstance = panzoom(heatmapCanvas, {
-      maxZoom: 4,
-      minZoom: 0.5,
-      bounds: true,
-      boundsPadding: 0.1,
-      smoothScroll: false,
-      transformOrigin: { x: 0, y: 0 },
-    });
-
-    let isTransforming = false;
-    panzoomInstance.on('transform', () => {
-      if (isTransforming) return;
-      isTransforming = true;
-
-      requestAnimationFrame(() => {
-        if (heatmapInstance?.renderer) {
-          const { scale } = panzoomInstance!.getTransform();
-          heatmapInstance.renderer.setDimensions(
-            container.offsetWidth,
-            container.offsetHeight
-          );
-          updateHeatmapData();
-        }
-        isTransforming = false;
-      });
-    });
-
-    heatmapCanvas.style.cursor = 'grab';
-    heatmapCanvas.addEventListener('mousedown', () => {
-      heatmapCanvas.style.cursor = 'grabbing';
-    });
-    heatmapCanvas.addEventListener('mouseup', () => {
-      heatmapCanvas.style.cursor = 'grab';
-    });
+    setupPanzoom(container, heatmapCanvas);
+    setupCursorEvents(heatmapCanvas);
   });
 };
 
+// Watchers
+watch(data, updateHeatmapData, { deep: true });
+
+// Lifecycle hooks
 onMounted(() => {
   if (containerRef.value) {
     initHeatmap();
@@ -111,35 +129,4 @@ onUnmounted(() => {
   }
 });
 </script>
-
-<style scoped>
-.heatmap-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  background: rgba(0, 0, 0, 0.1);
-  border: 1px solid #ddd;
-  overflow: hidden;
-}
-
-.heatmap-content {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-#heatmap {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-}
-
-:deep(canvas) {
-  transform-origin: 0 0 !important;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-</style>
 
