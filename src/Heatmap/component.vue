@@ -9,6 +9,16 @@
         ref="backgroundRef"
         @load="handleImageLoad"
       />
+      <div
+        v-if="heatmapInstance"
+        :class="['heatmap-overlay', { 'is-transforming': isTransforming }]"
+      ></div>
+    </div>
+
+    <!-- Overlay para métricas de performance -->
+    <div v-if="isDev" class="performance-metrics">
+      <p>FPS: {{ fps }}</p>
+      <p>Frame Time: {{ frameTime.toFixed(2) }}ms</p>
     </div>
   </div>
 </template>
@@ -23,6 +33,8 @@ import panzoom from "panzoom";
 import "./styles.css";
 import { normalizeData } from "./utils";
 import { useRequestAnimationFrame } from './composables/useRequestAnimationFrame';
+import { usePerformanceMetrics } from './composables/usePerformanceMetrics';
+import { useThrottle } from './composables/useThrottle';
 
 // Props e Model
 const props = withDefaults(defineProps<Omit<HeatmapProps, "dataValue">>(), {
@@ -53,6 +65,13 @@ const normalizedData = computed(() => {
 
 const { schedule: scheduleRender } = useRequestAnimationFrame();
 
+// Performance metrics
+const isDev = process.env.NODE_ENV === 'development';
+const { fps, frameTime } = usePerformanceMetrics();
+
+// Adiciona ref para controlar visibilidade
+const isTransforming = ref(false);
+
 // Handler para carregamento da imagem
 const handleImageLoad = () => {
   if (backgroundRef.value) {
@@ -82,10 +101,15 @@ const updateHeatmapData = () => {
   const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
   if (!container) return;
 
-  heatmapInstance.setData({
-    max: 100,
-    min: 0,
-    data: data.value // Usa os dados originais sem normalização
+  // Cache os dados normalizados para evitar recálculos
+  const cachedData = data.value;
+
+  scheduleRender(() => {
+    heatmapInstance!.setData({
+      max: 100,
+      min: 0,
+      data: cachedData
+    });
   });
 };
 
@@ -102,19 +126,26 @@ const setupCursorEvents = (canvas: HTMLElement) => {
 const setupPanzoom = (container: HTMLElement, canvas: HTMLElement) => {
   panzoomInstance = panzoom(container, PANZOOM_DEFAULT_CONFIG);
 
-  let isTransforming = false;
-  panzoomInstance.on('transform', () => {
-    if (isTransforming) return;
-    isTransforming = true;
+  let transformTimeout: number;
 
-    scheduleRender(() => {
+  panzoomInstance.on('transform', () => {
+    // Oculta o heatmap durante a transformação
+    isTransforming.value = true;
+
+    // Limpa o timeout anterior se existir
+    if (transformTimeout) {
+      clearTimeout(transformTimeout);
+    }
+
+    // Agenda a atualização e exibição do heatmap
+    transformTimeout = window.setTimeout(() => {
       if (heatmapInstance?.renderer && backgroundRef.value) {
         const { naturalWidth, naturalHeight } = backgroundRef.value;
         heatmapInstance.renderer.setDimensions(naturalWidth, naturalHeight);
         updateHeatmapData();
+        isTransforming.value = false;
       }
-      isTransforming = false;
-    });
+    }, 150); // Delay para aguardar o fim da transformação
   });
 };
 
@@ -184,6 +215,23 @@ onUnmounted(() => {
   z-index: 0;
 }
 
+.heatmap-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.heatmap-overlay.is-transforming {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
 :deep(canvas) {
   position: absolute;
   top: 0;
@@ -192,6 +240,20 @@ onUnmounted(() => {
   transform-origin: 0 0 !important;
   width: 100% !important;
   height: 100% !important;
+  will-change: transform; /* Otimiza transformações */
+  backface-visibility: hidden; /* Melhora performance */
+}
+
+.performance-metrics {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  z-index: 1000;
 }
 </style>
 

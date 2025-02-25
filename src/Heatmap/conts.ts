@@ -19,8 +19,10 @@ export const PANZOOM_DEFAULT_CONFIG = {
   minZoom: 0.1,
   bounds: true,
   boundsPadding: 0.5,
-  smoothScroll: false,
-  transformOrigin: { x: 0, y: 0 }
+  smoothScroll: true,
+  transformOrigin: { x: 0, y: 0 },
+  zoomSpeed: 0.065,
+  smoothScroll: true
 };
 
 export const CURSOR_DEFAULT_STYLES = {
