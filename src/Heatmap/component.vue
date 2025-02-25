@@ -22,6 +22,7 @@ import type { HeatmapProps } from "./types";
 import panzoom from "panzoom";
 import "./styles.css";
 import { normalizeData } from "./utils";
+import { useRequestAnimationFrame } from './composables/useRequestAnimationFrame';
 
 // Props e Model
 const props = withDefaults(defineProps<Omit<HeatmapProps, "dataValue">>(), {
@@ -50,6 +51,8 @@ const normalizedData = computed(() => {
   return normalizeData(data.value, dimensions.value);
 });
 
+const { schedule: scheduleRender } = useRequestAnimationFrame();
+
 // Handler para carregamento da imagem
 const handleImageLoad = () => {
   if (backgroundRef.value) {
@@ -59,15 +62,17 @@ const handleImageLoad = () => {
       height: img.naturalHeight
     };
 
-    if (heatmapInstance) {
-      const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
-      if (container) {
-        container.style.width = `${img.naturalWidth}px`;
-        container.style.height = `${img.naturalHeight}px`;
+    scheduleRender(() => {
+      if (heatmapInstance) {
+        const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
+        if (container) {
+          container.style.width = `${img.naturalWidth}px`;
+          container.style.height = `${img.naturalHeight}px`;
+        }
+        heatmapInstance.renderer.setDimensions(img.naturalWidth, img.naturalHeight);
+        updateHeatmapData();
       }
-      heatmapInstance.renderer.setDimensions(img.naturalWidth, img.naturalHeight);
-      updateHeatmapData();
-    }
+    });
   }
 };
 
@@ -102,12 +107,10 @@ const setupPanzoom = (container: HTMLElement, canvas: HTMLElement) => {
     if (isTransforming) return;
     isTransforming = true;
 
-    requestAnimationFrame(() => {
-      if (heatmapInstance?.renderer) {
-        heatmapInstance.renderer.setDimensions(
-          container.offsetWidth,
-          container.offsetHeight
-        );
+    scheduleRender(() => {
+      if (heatmapInstance?.renderer && backgroundRef.value) {
+        const { naturalWidth, naturalHeight } = backgroundRef.value;
+        heatmapInstance.renderer.setDimensions(naturalWidth, naturalHeight);
         updateHeatmapData();
       }
       isTransforming = false;
