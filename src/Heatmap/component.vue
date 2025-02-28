@@ -9,10 +9,27 @@
         ref="backgroundRef"
         @load="handleImageLoad"
       />
-      <div
-        v-if="heatmapInstance"
-        :class="['heatmap-overlay', { 'is-transforming': isTransforming }]"
-      ></div>
+    </div>
+
+    <div
+      v-if="heatmapInstance"
+      :class="['heatmap-overlay', { 'is-transforming': isTransforming }]"
+    >
+      <div v-if="isTransforming" class="loading-spinner"></div>
+    </div>
+
+    <!-- Área de logs -->
+    <div class="event-logs">
+      <div class="logs-header">
+        <h4>Event Logs</h4>
+        <button class="clear-logs-btn" @click="clearLogs">Clear</button>
+      </div>
+      <div class="logs-content">
+        <div v-for="(log, index) in eventLogs" :key="index" class="log-item">
+          <span class="log-time">{{ log.time }}</span>
+          <span class="log-message">{{ log.message }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Overlay para métricas de performance -->
@@ -63,26 +80,41 @@ const { fps, frameTime } = usePerformanceMetrics();
 // Adiciona ref para controlar visibilidade
 const isTransforming = ref(false);
 
+// Adiciona ref para logs
+const eventLogs = ref<Array<{ time: string, message: string }>>([]);
+
+// Função para adicionar logs
+const addLog = (message: string) => {
+  const time = new Date().toLocaleTimeString();
+  eventLogs.value.unshift({ time, message });
+
+  // Mantém apenas os últimos 10 logs
+  if (eventLogs.value.length > 10) {
+    eventLogs.value.pop();
+  }
+};
+
+// Função para limpar logs
+const clearLogs = () => {
+  eventLogs.value = [];
+};
+
 // Handler para carregamento da imagem
 const handleImageLoad = () => {
+  addLog('Image loaded');
   if (backgroundRef.value) {
     const img = backgroundRef.value;
+    const { naturalWidth, naturalHeight } = img;
+
     dimensions.value = {
-      width: img.naturalWidth,
-      height: img.naturalHeight
+      width: naturalWidth,
+      height: naturalHeight
     };
 
-    scheduleRender(() => {
-      if (heatmapInstance) {
-        const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
-        if (container) {
-          container.style.width = `${img.naturalWidth}px`;
-          container.style.height = `${img.naturalHeight}px`;
-        }
-        heatmapInstance.renderer.setDimensions(img.naturalWidth, img.naturalHeight);
-        updateHeatmapData();
-      }
-    });
+    addLog(`Image dimensions: ${naturalWidth}x${naturalHeight}`);
+
+    // Inicializa o heatmap após carregar a imagem
+    initHeatmap();
   }
 };
 
@@ -92,7 +124,7 @@ const updateHeatmapData = () => {
   const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
   if (!container) return;
 
-  // Cache os dados normalizados para evitar recálculos
+  addLog('Updating heatmap data');
   const cachedData = data.value;
 
   scheduleRender(() => {
@@ -101,6 +133,7 @@ const updateHeatmapData = () => {
       min: 0,
       data: cachedData
     });
+    addLog(`Heatmap rendered with ${cachedData.length} points`);
   });
 };
 
@@ -121,17 +154,17 @@ const setupPanzoom = (container: HTMLElement, canvas: HTMLElement) => {
   let isActive = false;
 
   panzoomInstance.on('transform', () => {
-    // Oculta o heatmap durante a transformação
+    if (!isActive) {
+      addLog('Transform started');
+      isActive = true;
+    }
+
     isTransforming.value = true;
 
-    // Se já estiver em transformação, apenas atualiza o timeout
-    if (isActive) {
+    if (transformTimeout) {
       clearTimeout(transformTimeout);
     }
 
-    isActive = true;
-
-    // Agenda a atualização apenas quando parar de transformar
     transformTimeout = window.setTimeout(() => {
       if (heatmapInstance?.renderer && backgroundRef.value) {
         const { naturalWidth, naturalHeight } = backgroundRef.value;
@@ -139,6 +172,7 @@ const setupPanzoom = (container: HTMLElement, canvas: HTMLElement) => {
         updateHeatmapData();
         isTransforming.value = false;
         isActive = false;
+        addLog('Transform ended');
       }
     }, 150);
   });
@@ -148,19 +182,21 @@ const initHeatmap = () => {
   const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
   if (!container) return;
 
-  if (backgroundRef.value) {
-    const { naturalWidth, naturalHeight } = backgroundRef.value;
-    dimensions.value = { width: naturalWidth, height: naturalHeight };
-  }
+  addLog('Initializing heatmap');
+
+  // Define o tamanho do container para corresponder à imagem
+  container.style.width = `${dimensions.value.width}px`;
+  container.style.height = `${dimensions.value.height}px`;
 
   heatmapInstance = new HeatMap({
     container,
     ...HEATMAP_DEFAULT_CONFIG,
     ...props.config,
-    width: dimensions.value.width || 800, // Valor padrão caso não tenha imagem
-    height: dimensions.value.height || 600
+    width: dimensions.value.width,
+    height: dimensions.value.height
   });
 
+  addLog('Heatmap instance created');
   updateHeatmapData();
 
   nextTick(() => {
@@ -169,20 +205,65 @@ const initHeatmap = () => {
 
     setupPanzoom(container, heatmapCanvas);
     setupCursorEvents(heatmapCanvas);
+    addLog('Heatmap setup completed');
   });
 };
 
 // Lifecycle hooks
 onMounted(() => {
-  if (containerRef.value) {
-    initHeatmap();
-  }
+  // Removemos a inicialização aqui, ela será feita após o carregamento da imagem
+  addLog('Component mounted');
 });
 
 onUnmounted(() => {
+  // Limpa os logs
+  eventLogs.value = [];
+
+  // Limpa o panzoom
   if (panzoomInstance) {
     panzoomInstance.dispose();
   }
 });
 </script>
+
+<style>
+/* Adicione ao arquivo styles.css */
+.event-logs {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  width: 300px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  z-index: 1000;
+}
+
+.logs-content {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.log-item {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.log-time {
+  color: #8af;
+  margin-right: 8px;
+}
+
+.log-message {
+  color: #fff;
+}
+
+h4 {
+  margin: 0 0 8px 0;
+  color: #fff;
+  font-size: 14px;
+}
+</style>
 
