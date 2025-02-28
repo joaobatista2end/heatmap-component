@@ -10,14 +10,11 @@ export function usePerformanceMetrics() {
 
   const measure = () => {
     const now = performance.now();
-
-    // Calcula o tempo do frame
     frameTime.value = now - lastFrameTime;
     lastFrameTime = now;
-
-    // Calcula FPS
     frameCount++;
-    if (now - lastFpsUpdate >= 1000) { // Atualiza a cada segundo
+    frameCount++;
+    if (now - lastFpsUpdate >= 1000) {
       fps.value = frameCount;
       frameCount = 0;
       lastFpsUpdate = now;

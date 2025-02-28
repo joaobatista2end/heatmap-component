@@ -21,17 +21,21 @@
 <script setup lang="ts">
 import HeatMap from "heatmap-ts";
 import type { DataPoint } from "heatmap-ts";
-import {  onUnmounted, ref, nextTick } from "vue";
-import { CURSOR_DEFAULT_STYLES, HEATMAP_DEFAULT_CONFIG, PANZOOM_DEFAULT_CONFIG } from "./conts";
+import { onUnmounted, ref, nextTick } from "vue";
+import {
+  CURSOR_DEFAULT_STYLES,
+  HEATMAP_DEFAULT_CONFIG,
+  PANZOOM_DEFAULT_CONFIG,
+} from "./conts";
 import type { HeatmapProps } from "./types";
 import panzoom from "panzoom";
 import "./styles.css";
-import { usePerformanceMetrics } from './composables/usePerformanceMetrics';
+import { usePerformanceMetrics } from "./composables/usePerformanceMetrics";
 
 const props = withDefaults(defineProps<Omit<HeatmapProps, "dataValue">>(), {
   config: () => HEATMAP_DEFAULT_CONFIG,
   backgroundImage: null,
-  devMode: true
+  devMode: true,
 });
 
 const data = defineModel("data", {
@@ -55,7 +59,7 @@ const handleImageLoad = () => {
 
     dimensions.value = {
       width: naturalWidth,
-      height: naturalHeight
+      height: naturalHeight,
     };
 
     initHeatmap();
@@ -65,7 +69,9 @@ const handleImageLoad = () => {
 const updateHeatmapData = () => {
   if (!heatmapInstance) return;
 
-  const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
+  const container = containerRef.value?.querySelector(
+    "#heatmap"
+  ) as HTMLElement;
   if (!container) return;
 
   const cachedData = data.value;
@@ -74,17 +80,17 @@ const updateHeatmapData = () => {
     heatmapInstance!.setData({
       max: 100,
       min: 0,
-      data: cachedData
+      data: cachedData,
     });
   });
 };
 
 const setupCursorEvents = (canvas: HTMLElement) => {
   canvas.style.cursor = CURSOR_DEFAULT_STYLES.default;
-  canvas.addEventListener('mousedown', () => {
+  canvas.addEventListener("mousedown", () => {
     canvas.style.cursor = CURSOR_DEFAULT_STYLES.dragging;
   });
-  canvas.addEventListener('mouseup', () => {
+  canvas.addEventListener("mouseup", () => {
     canvas.style.cursor = CURSOR_DEFAULT_STYLES.default;
   });
 };
@@ -100,29 +106,33 @@ const setupPanzoom = (container: HTMLElement) => {
     minZoom: initialScale * 0.1,
     maxZoom: initialScale * 4,
     bounds: false,
-    boundsPadding: 1
+    boundsPadding: 1,
   });
 
-  const centerX = (containerRect.width - dimensions.value.width * initialScale) / 2;
-  const centerY = (containerRect.height - dimensions.value.height * initialScale) / 2;
+  const centerX =
+    (containerRect.width - dimensions.value.width * initialScale) / 2;
+  const centerY =
+    (containerRect.height - dimensions.value.height * initialScale) / 2;
 
   container.style.transform = `translate(${centerX}px, ${centerY}px) scale(${initialScale})`;
 
-  panzoomInstance.on('transform', (e) => {
+  panzoomInstance.on("transform", (e) => {
     const transform = panzoomInstance!.getTransform();
 
     if (container && heatmapInstance?.renderer.canvas) {
       const matrix = `matrix(${transform.scale}, 0, 0, ${transform.scale}, ${transform.x}, ${transform.y})`;
       container.style.transform = matrix;
-      heatmapInstance.renderer.canvas.style.transform = 'none';
+      heatmapInstance.renderer.canvas.style.transform = "none";
     }
   });
 
-  panzoomInstance.on('panend zoomend', () => panzoomInstance!.getTransform());
+  panzoomInstance.on("panend zoomend", () => panzoomInstance!.getTransform());
 };
 
 const initHeatmap = () => {
-  const container = containerRef.value?.querySelector('#heatmap') as HTMLElement;
+  const container = containerRef.value?.querySelector(
+    "#heatmap"
+  ) as HTMLElement;
   if (!container) return;
 
   container.style.width = `${dimensions.value.width}px`;
@@ -133,20 +143,19 @@ const initHeatmap = () => {
     ...HEATMAP_DEFAULT_CONFIG,
     ...props.config,
     width: dimensions.value.width,
-    height: dimensions.value.height
+    height: dimensions.value.height,
   });
 
   updateHeatmapData();
 
   nextTick(() => {
-    const heatmapCanvas = container.querySelector('canvas');
+    const heatmapCanvas = container.querySelector("canvas");
     if (!heatmapCanvas) return;
 
     setupPanzoom(container);
     setupCursorEvents(heatmapCanvas);
   });
 };
-
 
 onUnmounted(() => {
   if (panzoomInstance) {
