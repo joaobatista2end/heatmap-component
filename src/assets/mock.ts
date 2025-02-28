@@ -1,377 +1,1008 @@
 import type { DataPoint } from 'heatmap-ts';
 
-export const map = {
-  _id: "24",
-  label: "image89.png",
-  url: "https://i.imgur.com/UnmPeL3.png",
-};
-
-export interface MockPoint {
-  posicao: [number, number];
-  quantidade: number;
-  tempo_permanencia_media: number;
-}
-
-export const points: MockPoint[] = [
+export const mapMockData: DataPoint[] = [
   {
-    posicao: [5376, 3588],
-    quantidade: 9337,
-    tempo_permanencia_media: 142,
+    "x": 569,
+    "y": 388,
+    "value": -2
   },
   {
-    posicao: [5316, 3669],
-    quantidade: 5268,
-    tempo_permanencia_media: 34,
+    "x": 490,
+    "y": 259,
+    "value": 6
   },
   {
-    posicao: [3735, 1104],
-    quantidade: 38956,
-    tempo_permanencia_media: 160,
+    "x": 870,
+    "y": 724,
+    "value": -42
   },
   {
-    posicao: [3940, 1120],
-    quantidade: 68814,
-    tempo_permanencia_media: 122,
+    "x": 18,
+    "y": 149,
+    "value": -8
   },
   {
-    posicao: [4203, 1122],
-    quantidade: 96238,
-    tempo_permanencia_media: 59,
+    "x": 835,
+    "y": 1036,
+    "value": -18
   },
   {
-    posicao: [1895, 1750],
-    quantidade: 21516,
-    tempo_permanencia_media: 187,
+    "x": 1016,
+    "y": 523,
+    "value": -29
   },
   {
-    posicao: [1926, 1775],
-    quantidade: 1381,
-    tempo_permanencia_media: 5,
+    "x": 697,
+    "y": 863,
+    "value": -8
   },
   {
-    posicao: [1920, 2302],
-    quantidade: 997,
-    tempo_permanencia_media: 156,
+    "x": 1012,
+    "y": 889,
+    "value": 18
   },
   {
-    posicao: [1893, 2651],
-    quantidade: 2902,
-    tempo_permanencia_media: 152,
+    "x": 316,
+    "y": 688,
+    "value": -38
   },
   {
-    posicao: [1937, 2943],
-    quantidade: 2662,
-    tempo_permanencia_media: 24,
+    "x": 312,
+    "y": 517,
+    "value": 49
   },
   {
-    posicao: [1922, 3290],
-    quantidade: 7562,
-    tempo_permanencia_media: 75,
+    "x": 617,
+    "y": 527,
+    "value": -34
   },
   {
-    posicao: [2053, 1474],
-    quantidade: 3218,
-    tempo_permanencia_media: 163,
+    "x": 675,
+    "y": 61,
+    "value": -19
   },
   {
-    posicao: [2054, 1481],
-    quantidade: 2738,
-    tempo_permanencia_media: 72,
+    "x": 480,
+    "y": 1017,
+    "value": -28
   },
   {
-    posicao: [2462, 2070],
-    quantidade: 2053,
-    tempo_permanencia_media: 62,
+    "x": 762,
+    "y": 362,
+    "value": 43
   },
   {
-    posicao: [2043, 2090],
-    quantidade: 1184,
-    tempo_permanencia_media: 9,
+    "x": 578,
+    "y": 560,
+    "value": 15
   },
   {
-    posicao: [2350, 2703],
-    quantidade: 1924,
-    tempo_permanencia_media: 136,
+    "x": 252,
+    "y": 751,
+    "value": -49
   },
   {
-    posicao: [2054, 2684],
-    quantidade: 89091,
-    tempo_permanencia_media: 166,
+    "x": 943,
+    "y": 989,
+    "value": 13
   },
   {
-    posicao: [2472, 3479],
-    quantidade: 4553,
-    tempo_permanencia_media: 73,
+    "x": 797,
+    "y": 940,
+    "value": 12
   },
   {
-    posicao: [1987, 3495],
-    quantidade: 2482,
-    tempo_permanencia_media: 7,
+    "x": 508,
+    "y": 981,
+    "value": -50
   },
   {
-    posicao: [3014, 1485],
-    quantidade: 2644,
-    tempo_permanencia_media: 60,
+    "x": 343,
+    "y": 887,
+    "value": -25
   },
   {
-    posicao: [2672, 1483],
-    quantidade: 1141,
-    tempo_permanencia_media: 185,
+    "x": 281,
+    "y": 145,
+    "value": -1
   },
   {
-    posicao: [3157, 2063],
-    quantidade: 2599,
-    tempo_permanencia_media: 198,
+    "x": 30,
+    "y": 455,
+    "value": -32
   },
   {
-    posicao: [2681, 2078],
-    quantidade: 211,
-    tempo_permanencia_media: 121,
+    "x": 767,
+    "y": 708,
+    "value": -12
   },
   {
-    posicao: [3181, 2705],
-    quantidade: 4610,
-    tempo_permanencia_media: 86,
+    "x": 407,
+    "y": 328,
+    "value": 20
   },
   {
-    posicao: [2764, 2679],
-    quantidade: 17063,
-    tempo_permanencia_media: 30,
+    "x": 127,
+    "y": 601,
+    "value": 13
   },
   {
-    posicao: [3163, 3495],
-    quantidade: 7966,
-    tempo_permanencia_media: 0,
+    "x": 31,
+    "y": 329,
+    "value": 9
   },
   {
-    posicao: [2725, 3481],
-    quantidade: 2825,
-    tempo_permanencia_media: 17,
+    "x": 147,
+    "y": 655,
+    "value": -46
   },
   {
-    posicao: [3337, 1564],
-    quantidade: 2244,
-    tempo_permanencia_media: 130,
+    "x": 785,
+    "y": 1053,
+    "value": -23
   },
   {
-    posicao: [3321, 1997],
-    quantidade: 3014,
-    tempo_permanencia_media: 141,
+    "x": 368,
+    "y": 609,
+    "value": -22
   },
   {
-    posicao: [3326, 2254],
-    quantidade: 2129,
-    tempo_permanencia_media: 195,
+    "x": 206,
+    "y": 490,
+    "value": 43
   },
   {
-    posicao: [3324, 2574],
-    quantidade: 2864,
-    tempo_permanencia_media: 11,
+    "x": 562,
+    "y": 431,
+    "value": 22
   },
   {
-    posicao: [3313, 2874],
-    quantidade: 22557,
-    tempo_permanencia_media: 12,
+    "x": 612,
+    "y": 999,
+    "value": 49
   },
   {
-    posicao: [3334, 3271],
-    quantidade: 82056,
-    tempo_permanencia_media: 26,
+    "x": 375,
+    "y": 175,
+    "value": -50
   },
   {
-    posicao: [4076, 2094],
-    quantidade: 1108,
-    tempo_permanencia_media: 173,
+    "x": 20,
+    "y": 383,
+    "value": -44
   },
   {
-    posicao: [3547, 2069],
-    quantidade: 1578,
-    tempo_permanencia_media: 21,
+    "x": 533,
+    "y": 845,
+    "value": 30
   },
   {
-    posicao: [3882, 3506],
-    quantidade: 6487,
-    tempo_permanencia_media: 147,
+    "x": 595,
+    "y": 970,
+    "value": 4
   },
   {
-    posicao: [3383, 3502],
-    quantidade: 41713,
-    tempo_permanencia_media: 76,
+    "x": 436,
+    "y": 146,
+    "value": 25
   },
   {
-    posicao: [4325, 1602],
-    quantidade: 2235,
-    tempo_permanencia_media: 18,
+    "x": 466,
+    "y": 449,
+    "value": 28
   },
   {
-    posicao: [4325, 1990],
-    quantidade: 126,
-    tempo_permanencia_media: 29,
+    "x": 401,
+    "y": 666,
+    "value": -10
   },
   {
-    posicao: [4519, 2073],
-    quantidade: 2449,
-    tempo_permanencia_media: 36,
+    "x": 942,
+    "y": 337,
+    "value": 5
   },
   {
-    posicao: [4133, 2060],
-    quantidade: 1715,
-    tempo_permanencia_media: 116,
+    "x": 910,
+    "y": 751,
+    "value": 49
   },
   {
-    posicao: [4314, 2315],
-    quantidade: 1999,
-    tempo_permanencia_media: 87,
+    "x": 725,
+    "y": 197,
+    "value": 2
   },
   {
-    posicao: [4342, 2708],
-    quantidade: 1958,
-    tempo_permanencia_media: 191,
+    "x": 855,
+    "y": 270,
+    "value": -26
   },
   {
-    posicao: [4337, 2886],
-    quantidade: 2899,
-    tempo_permanencia_media: 73,
+    "x": 790,
+    "y": 939,
+    "value": -41
   },
   {
-    posicao: [4352, 3257],
-    quantidade: 3659,
-    tempo_permanencia_media: 76,
+    "x": 316,
+    "y": 523,
+    "value": -20
   },
   {
-    posicao: [4568, 3465],
-    quantidade: 4445,
-    tempo_permanencia_media: 27,
+    "x": 477,
+    "y": 291,
+    "value": 31
   },
   {
-    posicao: [4098, 3464],
-    quantidade: 7840,
-    tempo_permanencia_media: 56,
+    "x": 416,
+    "y": 174,
+    "value": 14
   },
   {
-    posicao: [5391, 2078],
-    quantidade: 3343,
-    tempo_permanencia_media: 199,
+    "x": 438,
+    "y": 142,
+    "value": -30
   },
   {
-    posicao: [4670, 2076],
-    quantidade: 941,
-    tempo_permanencia_media: 198,
+    "x": 985,
+    "y": 185,
+    "value": -15
   },
   {
-    posicao: [5190, 3490],
-    quantidade: 36134,
-    tempo_permanencia_media: 100,
+    "x": 559,
+    "y": 757,
+    "value": 31
   },
   {
-    posicao: [4548, 3488],
-    quantidade: 4136,
-    tempo_permanencia_media: 84,
+    "x": 986,
+    "y": 708,
+    "value": 13
   },
   {
-    posicao: [5440, 2212],
-    quantidade: 2044,
-    tempo_permanencia_media: 172,
+    "x": 408,
+    "y": 768,
+    "value": -47
   },
   {
-    posicao: [5444, 2671],
-    quantidade: 2439,
-    tempo_permanencia_media: 30,
+    "x": 117,
+    "y": 202,
+    "value": -16
   },
   {
-    posicao: [5439, 2894],
-    quantidade: 2366,
-    tempo_permanencia_media: 129,
+    "x": 1019,
+    "y": 981,
+    "value": 0
   },
   {
-    posicao: [5432, 3470],
-    quantidade: 21599,
-    tempo_permanencia_media: 27,
+    "x": 883,
+    "y": 1030,
+    "value": 7
   },
   {
-    posicao: [3122, 3181],
-    quantidade: 20426,
-    tempo_permanencia_media: 125,
+    "x": 701,
+    "y": 807,
+    "value": -15
   },
   {
-    posicao: [3113, 3251],
-    quantidade: 20144,
-    tempo_permanencia_media: 77,
+    "x": 630,
+    "y": 919,
+    "value": 9
   },
   {
-    posicao: [3802, 4078],
-    quantidade: 4643,
-    tempo_permanencia_media: 45,
+    "x": 664,
+    "y": 312,
+    "value": 41
   },
   {
-    posicao: [1632, 2688],
-    quantidade: 23,
-    tempo_permanencia_media: 64,
+    "x": 22,
+    "y": 756,
+    "value": -36
   },
   {
-    posicao: [2602, 2231],
-    quantidade: 28,
-    tempo_permanencia_media: 151,
+    "x": 873,
+    "y": 370,
+    "value": 38
   },
   {
-    posicao: [2613, 2509],
-    quantidade: 10,
-    tempo_permanencia_media: 4,
+    "x": 260,
+    "y": 964,
+    "value": 22
   },
   {
-    posicao: [2383, 2929],
-    quantidade: 59,
-    tempo_permanencia_media: 113,
+    "x": 545,
+    "y": 735,
+    "value": 48
   },
   {
-    posicao: [1792, 3752],
-    quantidade: 76,
-    tempo_permanencia_media: 15,
+    "x": 532,
+    "y": 895,
+    "value": -1
   },
   {
-    posicao: [2421, 3259],
-    quantidade: 11,
-    tempo_permanencia_media: 197,
+    "x": 435,
+    "y": 504,
+    "value": 47
   },
   {
-    posicao: [3065, 3085],
-    quantidade: 4,
-    tempo_permanencia_media: 26,
+    "x": 481,
+    "y": 105,
+    "value": -10
   },
   {
-    posicao: [2863, 3706],
-    quantidade: 62,
-    tempo_permanencia_media: 10,
+    "x": 351,
+    "y": 435,
+    "value": 8
   },
   {
-    posicao: [4905, 3096],
-    quantidade: 66,
-    tempo_permanencia_media: 163,
+    "x": 714,
+    "y": 348,
+    "value": 43
   },
   {
-    posicao: [3661, 3729],
-    quantidade: 91,
-    tempo_permanencia_media: 189,
+    "x": 935,
+    "y": 246,
+    "value": 3
   },
   {
-    posicao: [4905, 3082],
-    quantidade: 105,
-    tempo_permanencia_media: 190,
+    "x": 316,
+    "y": 99,
+    "value": -29
   },
   {
-    posicao: [4352, 3735],
-    quantidade: 30,
-    tempo_permanencia_media: 106,
+    "x": 445,
+    "y": 1014,
+    "value": 11
   },
   {
-    posicao: [4906, 3702],
-    quantidade: 67,
-    tempo_permanencia_media: 88,
+    "x": 104,
+    "y": 693,
+    "value": -23
   },
+  {
+    "x": 405,
+    "y": 658,
+    "value": -42
+  },
+  {
+    "x": 688,
+    "y": 650,
+    "value": 8
+  },
+  {
+    "x": 855,
+    "y": 1054,
+    "value": 6
+  },
+  {
+    "x": 908,
+    "y": 878,
+    "value": -29
+  },
+  {
+    "x": 315,
+    "y": 82,
+    "value": 22
+  },
+  {
+    "x": 652,
+    "y": 441,
+    "value": -3
+  },
+  {
+    "x": 974,
+    "y": 661,
+    "value": 39
+  },
+  {
+    "x": 258,
+    "y": 499,
+    "value": 42
+  },
+  {
+    "x": 685,
+    "y": 756,
+    "value": 40
+  },
+  {
+    "x": 575,
+    "y": 920,
+    "value": -14
+  },
+  {
+    "x": 874,
+    "y": 329,
+    "value": -32
+  },
+  {
+    "x": 881,
+    "y": 192,
+    "value": -15
+  },
+  {
+    "x": 347,
+    "y": 148,
+    "value": -10
+  },
+  {
+    "x": 15,
+    "y": 428,
+    "value": -7
+  },
+  {
+    "x": 816,
+    "y": 380,
+    "value": 0
+  },
+  {
+    "x": 795,
+    "y": 866,
+    "value": -29
+  },
+  {
+    "x": 646,
+    "y": 427,
+    "value": 24
+  },
+  {
+    "x": 358,
+    "y": 542,
+    "value": 46
+  },
+  {
+    "x": 1008,
+    "y": 922,
+    "value": 47
+  },
+  {
+    "x": 552,
+    "y": 85,
+    "value": -8
+  },
+  {
+    "x": 952,
+    "y": 199,
+    "value": -14
+  },
+  {
+    "x": 1006,
+    "y": 887,
+    "value": -9
+  },
+  {
+    "x": 285,
+    "y": 158,
+    "value": 28
+  },
+  {
+    "x": 211,
+    "y": 970,
+    "value": 38
+  },
+  {
+    "x": 819,
+    "y": 324,
+    "value": -36
+  },
+  {
+    "x": 461,
+    "y": 895,
+    "value": -43
+  },
+  {
+    "x": 167,
+    "y": 834,
+    "value": 34
+  },
+  {
+    "x": 885,
+    "y": 55,
+    "value": -4
+  },
+  {
+    "x": 1022,
+    "y": 781,
+    "value": -9
+  }
 ];
 
-export const mockData: DataPoint[] = points.map(point => ({
-  x: point.posicao[0],
-  y: point.posicao[1],
-  value: point.quantidade
-}));
+
+export const mapMockData2: DataPoint[] = [
+  {
+    "x": 57,
+    "y": 146,
+    "value": -2
+  },
+  {
+    "x": -22,
+    "y": 275,
+    "value": 6
+  },
+  {
+    "x": 358,
+    "y": -190,
+    "value": -42
+  },
+  {
+    "x": -494,
+    "y": 385,
+    "value": -8
+  },
+  {
+    "x": 323,
+    "y": -502,
+    "value": -18
+  },
+  {
+    "x": 504,
+    "y": 11,
+    "value": -29
+  },
+  {
+    "x": 185,
+    "y": -329,
+    "value": -8
+  },
+  {
+    "x": 500,
+    "y": -355,
+    "value": 18
+  },
+  {
+    "x": -196,
+    "y": -154,
+    "value": -38
+  },
+  {
+    "x": -200,
+    "y": 17,
+    "value": 49
+  },
+  {
+    "x": 105,
+    "y": 7,
+    "value": -34
+  },
+  {
+    "x": 163,
+    "y": 473,
+    "value": -19
+  },
+  {
+    "x": -32,
+    "y": -483,
+    "value": -28
+  },
+  {
+    "x": 250,
+    "y": 172,
+    "value": 43
+  },
+  {
+    "x": 66,
+    "y": -26,
+    "value": 15
+  },
+  {
+    "x": -260,
+    "y": -217,
+    "value": -49
+  },
+  {
+    "x": 431,
+    "y": -455,
+    "value": 13
+  },
+  {
+    "x": 285,
+    "y": -406,
+    "value": 12
+  },
+  {
+    "x": -4,
+    "y": -447,
+    "value": -50
+  },
+  {
+    "x": -169,
+    "y": -353,
+    "value": -25
+  },
+  {
+    "x": -231,
+    "y": 389,
+    "value": -1
+  },
+  {
+    "x": -482,
+    "y": 79,
+    "value": -32
+  },
+  {
+    "x": 255,
+    "y": -174,
+    "value": -12
+  },
+  {
+    "x": -105,
+    "y": 206,
+    "value": 20
+  },
+  {
+    "x": -385,
+    "y": -67,
+    "value": 13
+  },
+  {
+    "x": -481,
+    "y": 205,
+    "value": 9
+  },
+  {
+    "x": -365,
+    "y": -121,
+    "value": -46
+  },
+  {
+    "x": 273,
+    "y": -519,
+    "value": -23
+  },
+  {
+    "x": -144,
+    "y": -75,
+    "value": -22
+  },
+  {
+    "x": -306,
+    "y": 44,
+    "value": 43
+  },
+  {
+    "x": 50,
+    "y": 103,
+    "value": 22
+  },
+  {
+    "x": 100,
+    "y": -465,
+    "value": 49
+  },
+  {
+    "x": -137,
+    "y": 359,
+    "value": -50
+  },
+  {
+    "x": -492,
+    "y": 151,
+    "value": -44
+  },
+  {
+    "x": 21,
+    "y": -311,
+    "value": 30
+  },
+  {
+    "x": 83,
+    "y": -436,
+    "value": 4
+  },
+  {
+    "x": -76,
+    "y": 388,
+    "value": 25
+  },
+  {
+    "x": -46,
+    "y": 85,
+    "value": 28
+  },
+  {
+    "x": -111,
+    "y": -132,
+    "value": -10
+  },
+  {
+    "x": 430,
+    "y": 197,
+    "value": 5
+  },
+  {
+    "x": 398,
+    "y": -217,
+    "value": 49
+  },
+  {
+    "x": 213,
+    "y": 337,
+    "value": 2
+  },
+  {
+    "x": 343,
+    "y": 264,
+    "value": -26
+  },
+  {
+    "x": 278,
+    "y": -405,
+    "value": -41
+  },
+  {
+    "x": -196,
+    "y": 11,
+    "value": -20
+  },
+  {
+    "x": -35,
+    "y": 243,
+    "value": 31
+  },
+  {
+    "x": -96,
+    "y": 360,
+    "value": 14
+  },
+  {
+    "x": -74,
+    "y": 392,
+    "value": -30
+  },
+  {
+    "x": 473,
+    "y": 349,
+    "value": -15
+  },
+  {
+    "x": 47,
+    "y": -223,
+    "value": 31
+  },
+  {
+    "x": 474,
+    "y": -174,
+    "value": 13
+  },
+  {
+    "x": -104,
+    "y": -234,
+    "value": -47
+  },
+  {
+    "x": -395,
+    "y": 332,
+    "value": -16
+  },
+  {
+    "x": 507,
+    "y": -447,
+    "value": 0
+  },
+  {
+    "x": 371,
+    "y": -496,
+    "value": 7
+  },
+  {
+    "x": 189,
+    "y": -273,
+    "value": -15
+  },
+  {
+    "x": 118,
+    "y": -385,
+    "value": 9
+  },
+  {
+    "x": 152,
+    "y": 222,
+    "value": 41
+  },
+  {
+    "x": -490,
+    "y": -222,
+    "value": -36
+  },
+  {
+    "x": 361,
+    "y": 164,
+    "value": 38
+  },
+  {
+    "x": -252,
+    "y": -430,
+    "value": 22
+  },
+  {
+    "x": 33,
+    "y": -201,
+    "value": 48
+  },
+  {
+    "x": 20,
+    "y": -361,
+    "value": -1
+  },
+  {
+    "x": -77,
+    "y": 30,
+    "value": 47
+  },
+  {
+    "x": -31,
+    "y": 429,
+    "value": -10
+  },
+  {
+    "x": -161,
+    "y": 99,
+    "value": 8
+  },
+  {
+    "x": 202,
+    "y": 186,
+    "value": 43
+  },
+  {
+    "x": 423,
+    "y": 288,
+    "value": 3
+  },
+  {
+    "x": -196,
+    "y": 435,
+    "value": -29
+  },
+  {
+    "x": -67,
+    "y": -480,
+    "value": 11
+  },
+  {
+    "x": -408,
+    "y": -159,
+    "value": -23
+  },
+  {
+    "x": -107,
+    "y": -124,
+    "value": -42
+  },
+  {
+    "x": 176,
+    "y": -116,
+    "value": 8
+  },
+  {
+    "x": 343,
+    "y": -520,
+    "value": 6
+  },
+  {
+    "x": 396,
+    "y": -344,
+    "value": -29
+  },
+  {
+    "x": -197,
+    "y": 452,
+    "value": 22
+  },
+  {
+    "x": 140,
+    "y": 93,
+    "value": -3
+  },
+  {
+    "x": 462,
+    "y": -127,
+    "value": 39
+  },
+  {
+    "x": -254,
+    "y": 35,
+    "value": 42
+  },
+  {
+    "x": 173,
+    "y": -222,
+    "value": 40
+  },
+  {
+    "x": 63,
+    "y": -386,
+    "value": -14
+  },
+  {
+    "x": 362,
+    "y": 205,
+    "value": -32
+  },
+  {
+    "x": 369,
+    "y": 342,
+    "value": -15
+  },
+  {
+    "x": -165,
+    "y": 386,
+    "value": -10
+  },
+  {
+    "x": -497,
+    "y": 106,
+    "value": -7
+  },
+  {
+    "x": 304,
+    "y": 154,
+    "value": 0
+  },
+  {
+    "x": 283,
+    "y": -332,
+    "value": -29
+  },
+  {
+    "x": 134,
+    "y": 107,
+    "value": 24
+  },
+  {
+    "x": -154,
+    "y": -8,
+    "value": 46
+  },
+  {
+    "x": 496,
+    "y": -388,
+    "value": 47
+  },
+  {
+    "x": 40,
+    "y": 449,
+    "value": -8
+  },
+  {
+    "x": 440,
+    "y": 335,
+    "value": -14
+  },
+  {
+    "x": 494,
+    "y": -353,
+    "value": -9
+  },
+  {
+    "x": -227,
+    "y": 376,
+    "value": 28
+  },
+  {
+    "x": -301,
+    "y": -436,
+    "value": 38
+  },
+  {
+    "x": 307,
+    "y": 210,
+    "value": -36
+  },
+  {
+    "x": -51,
+    "y": -361,
+    "value": -43
+  },
+  {
+    "x": -345,
+    "y": -300,
+    "value": 34
+  },
+  {
+    "x": 373,
+    "y": 479,
+    "value": -4
+  },
+  {
+    "x": 510,
+    "y": -247,
+    "value": -9
+  }
+];

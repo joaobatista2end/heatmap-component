@@ -1,9 +1,9 @@
 import type { Config, DataPoint } from "heatmap-ts"
 
-export type HeatmapProps = {
-    data: DataPoint[],
-    config?: Config,
-    devMode?: boolean,
-    backgroundImage?: string | null
+export interface HeatmapProps {
+    config?: Record<string, any>;
+    backgroundImage?: string | null;
+    devMode?: boolean;
+    data: DataPoint[];
 }
 
