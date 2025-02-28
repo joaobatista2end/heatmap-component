@@ -22,6 +22,11 @@ export const PANZOOM_DEFAULT_CONFIG = {
   smoothScroll: false,
   transformOrigin: { x: 0, y: 0 },
   zoomSpeed: 0.065,
+  accelerate: true,
+  filterKey: () => true,
+  enableTextSelection: false,
+  contain: 'outside',
+  constrainRatio: true
 };
 
 export const CURSOR_DEFAULT_STYLES = {

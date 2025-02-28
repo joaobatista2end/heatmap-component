@@ -11,13 +11,6 @@
       />
     </div>
 
-    <div
-      v-if="heatmapInstance"
-      :class="['heatmap-overlay', { 'is-transforming': isTransforming }]"
-    >
-      <div v-if="isTransforming" class="loading-spinner"></div>
-    </div>
-
     <!-- Área de logs -->
     <div class="event-logs">
       <div class="logs-header">
@@ -77,9 +70,6 @@ const { schedule: scheduleRender } = useRequestAnimationFrame();
 const isDev = import.meta.env.DEV;
 const { fps, frameTime } = usePerformanceMetrics();
 
-// Adiciona ref para controlar visibilidade
-const isTransforming = ref(false);
-
 // Adiciona ref para logs
 const eventLogs = ref<Array<{ time: string, message: string }>>([]);
 
@@ -127,7 +117,8 @@ const updateHeatmapData = () => {
   addLog('Updating heatmap data');
   const cachedData = data.value;
 
-  scheduleRender(() => {
+  // Usa requestAnimationFrame diretamente para o update do heatmap
+  requestAnimationFrame(() => {
     heatmapInstance!.setData({
       max: 100,
       min: 0,
@@ -148,33 +139,40 @@ const setupCursorEvents = (canvas: HTMLElement) => {
 };
 
 const setupPanzoom = (container: HTMLElement, canvas: HTMLElement) => {
-  panzoomInstance = panzoom(container, PANZOOM_DEFAULT_CONFIG);
+  // Calcula a escala inicial baseada nas dimensões da imagem e do container
+  const containerRect = container.getBoundingClientRect();
+  const scaleX = containerRect.width / dimensions.value.width;
+  const scaleY = containerRect.height / dimensions.value.height;
+  const initialScale = Math.min(scaleX, scaleY);
 
-  let transformTimeout: number;
-  let isActive = false;
+  panzoomInstance = panzoom(container, {
+    ...PANZOOM_DEFAULT_CONFIG,
+    minZoom: initialScale * 0.5,
+    maxZoom: initialScale * 4,
+  });
 
-  panzoomInstance.on('transform', () => {
-    if (!isActive) {
-      addLog('Transform started');
-      isActive = true;
+  // Centraliza e ajusta a escala inicial
+  const centerX = (containerRect.width - dimensions.value.width * initialScale) / 2;
+  const centerY = (containerRect.height - dimensions.value.height * initialScale) / 2;
+
+  // Aplica a transformação inicial
+  container.style.transform = `translate(${centerX}px, ${centerY}px) scale(${initialScale})`;
+
+  // Atualiza transformação do canvas e container
+  panzoomInstance.on('transform', (e) => {
+    const transform = panzoomInstance!.getTransform();
+
+    // Aplica a mesma transformação ao container e ao canvas do heatmap
+    if (container && heatmapInstance?.renderer.canvas) {
+      const matrix = `matrix(${transform.scale}, 0, 0, ${transform.scale}, ${transform.x}, ${transform.y})`;
+      container.style.transform = matrix;
+      heatmapInstance.renderer.canvas.style.transform = 'none'; // Remove transformação do canvas
     }
+  });
 
-    isTransforming.value = true;
-
-    if (transformTimeout) {
-      clearTimeout(transformTimeout);
-    }
-
-    transformTimeout = window.setTimeout(() => {
-      if (heatmapInstance?.renderer && backgroundRef.value) {
-        const { naturalWidth, naturalHeight } = backgroundRef.value;
-        heatmapInstance.renderer.setDimensions(naturalWidth, naturalHeight);
-        updateHeatmapData();
-        isTransforming.value = false;
-        isActive = false;
-        addLog('Transform ended');
-      }
-    }, 150);
+  panzoomInstance.on('panend zoomend', () => {
+    const transform = panzoomInstance!.getTransform();
+    addLog(`Transform ended (scale: ${transform.scale.toFixed(2)}, x: ${transform.x.toFixed(0)}, y: ${transform.y.toFixed(0)})`);
   });
 };
 
@@ -184,7 +182,7 @@ const initHeatmap = () => {
 
   addLog('Initializing heatmap');
 
-  // Define o tamanho do container para corresponder à imagem
+  // Define o tamanho exato da imagem
   container.style.width = `${dimensions.value.width}px`;
   container.style.height = `${dimensions.value.height}px`;
 

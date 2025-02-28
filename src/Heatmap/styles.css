@@ -11,12 +11,13 @@
   width: 100%;
   height: 100%;
   position: relative;
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
 #heatmap {
-  width: 100%;
-  height: 100%;
   position: relative;
+  transform-origin: 0 0;
 }
 
 .heatmap-background {
@@ -35,42 +36,7 @@ canvas {
   left: 0 !important;
   z-index: 2 !important;
   transform-origin: 0 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.heatmap-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 3;
-  pointer-events: none;
-  background-color: transparent;
-}
-
-.heatmap-overlay.is-transforming {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-.loading-spinner {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #3498db;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  z-index: 4;
-}
-
-@keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+  will-change: transform;
 }
 
 .performance-metrics {
