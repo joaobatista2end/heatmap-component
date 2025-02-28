@@ -147,8 +147,10 @@ const setupPanzoom = (container: HTMLElement, canvas: HTMLElement) => {
 
   panzoomInstance = panzoom(container, {
     ...PANZOOM_DEFAULT_CONFIG,
-    minZoom: initialScale * 0.5,
+    minZoom: initialScale * 0.1,
     maxZoom: initialScale * 4,
+    bounds: false,
+    boundsPadding: 1
   });
 
   // Centraliza e ajusta a escala inicial
