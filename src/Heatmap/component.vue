@@ -1,5 +1,21 @@
 <template>
   <div ref="containerRef" class="heatmap-container">
+    <!-- Controles do heatmap -->
+    <div class="heatmap-controls">
+      <div class="radius-control">
+        <label for="radius-slider">Área de influência: {{ radius }}</label>
+        <input
+          id="radius-slider"
+          type="range"
+          min="5"
+          max="100"
+          step="10"
+          v-model.number="radius"
+          @input="debouncedUpdateRadius"
+        />
+      </div>
+    </div>
+
     <!-- Legenda do heatmap -->
     <div class="heatmap-legend">
       <div class="legend-gradient-container">
@@ -28,7 +44,7 @@
       class="heatmap-tooltip"
       :style="tooltipStyle"
     >
-      <strong>{{ tooltipValue }}</strong>
+      <strong>{{ typeof tooltipValue === 'number' ? tooltipValue : tooltipValue }}</strong>
     </div>
 
     <div v-if="devMode" class="performance-metrics">
@@ -71,6 +87,9 @@ const dimensions = ref({ width: 0, height: 0 });
 const isInitialized = ref(false);
 const gradientImg = ref<HTMLImageElement | null>(null);
 
+// Controle de raio
+const radius = ref(30); // Valor inicial do raio
+
 // Tooltip state
 const showTooltip = ref(false);
 const tooltipX = ref(0);
@@ -91,6 +110,67 @@ const tooltipStyle = computed(() => {
   };
 });
 
+// Função para atualizar o raio do heatmap
+const updateHeatmapRadius = () => {
+  if (!heatmapInstance.value) return;
+
+  try {
+    // Salvar os dados atuais
+    const currentData = {
+      data: data.value,
+      min: legendMin.value,
+      max: legendMax.value
+    };
+
+    // Limpar a instância atual
+    cleanupHeatmap();
+
+    // Obter o container
+    const heatmapContainer = containerRef.value?.querySelector('#heatmap') as HTMLElement;
+    if (!heatmapContainer) return;
+
+    // Configurar o container
+    heatmapContainer.style.width = `${dimensions.value.width}px`;
+    heatmapContainer.style.height = `${dimensions.value.height}px`;
+
+    // Criar nova instância com o novo raio
+    heatmapInstance.value = new HeatMap({
+      container: heatmapContainer,
+      ...HEATMAP_DEFAULT_CONFIG,
+      ...props.config,
+      width: dimensions.value.width,
+      height: dimensions.value.height,
+      onExtremaChange: updateLegend,
+      useValueExtent: true,
+      valueExtent: [currentData.min, currentData.max],
+      radius: radius.value // Usar o novo valor do raio
+    });
+
+    // Definir os mesmos dados
+    heatmapInstance.value.setData(currentData);
+
+    // Reconfigurar panzoom e eventos
+    setupPanzoom(heatmapContainer);
+    setupTooltipEvents(heatmapContainer);
+
+  } catch (error) {
+    console.error('Erro ao atualizar o raio do heatmap:', error);
+  }
+};
+
+// Adicionar um debounce para evitar muitas atualizações durante o arrasto do slider
+let debounceTimeout: number | null = null;
+const debouncedUpdateRadius = () => {
+  if (debounceTimeout) {
+    clearTimeout(debounceTimeout);
+  }
+
+  debounceTimeout = window.setTimeout(() => {
+    updateHeatmapRadius();
+    debounceTimeout = null;
+  }, 100); // 100ms de debounce
+};
+
 // Função para inicializar o heatmap
 const initHeatmap = () => {
   if (!containerRef.value) return;
@@ -105,21 +185,33 @@ const initHeatmap = () => {
   heatmapContainer.style.width = `${dimensions.value.width}px`;
   heatmapContainer.style.height = `${dimensions.value.height}px`;
 
-  // Criar nova instância
+  // Calcular valores mínimo e máximo reais dos dados
+  const { min, max } = calculateDataExtremes(data.value);
+
+  // Atualizar valores da legenda diretamente
+  legendMin.value = min;
+  legendMax.value = max;
+
+  // Criar nova instância com configuração para valores negativos
   heatmapInstance.value = new HeatMap({
     container: heatmapContainer,
     ...HEATMAP_DEFAULT_CONFIG,
     ...props.config,
     width: dimensions.value.width,
     height: dimensions.value.height,
-    // Adicionar callback para atualizar a legenda
-    onExtremaChange: updateLegend
+    // Configurar para usar valores negativos
+    onExtremaChange: updateLegend,
+    // Estas opções são cruciais para valores negativos
+    useValueExtent: true,
+    valueExtent: [min, max],
+    // Usar o raio definido pelo usuário
+    radius: radius.value
   });
 
-  // Definir dados
+  // Definir dados com valores mínimo e máximo reais
   heatmapInstance.value.setData({
-    max: 100,
-    min: 0,
+    max: max,
+    min: min,
     data: data.value
   });
 
@@ -130,6 +222,23 @@ const initHeatmap = () => {
   setupTooltipEvents(heatmapContainer);
 
   isInitialized.value = true;
+};
+
+// Função para calcular os valores extremos reais dos dados
+const calculateDataExtremes = (points: DataPoint[]) => {
+  if (!points || points.length === 0) {
+    return { min: 0, max: 100 };
+  }
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  for (const point of points) {
+    if (point.value < min) min = point.value;
+    if (point.value > max) max = point.value;
+  }
+
+  return { min, max };
 };
 
 // Atualizar a legenda
@@ -193,27 +302,74 @@ const handleMouseMove = (ev: MouseEvent) => {
     const adjustedX = (x - transform.x) / transform.scale;
     const adjustedY = (y - transform.y) / transform.scale;
 
-    try {
-      // Obter o valor na posição ajustada
-      const value = heatmapInstance.value.getValueAt({
-        x: adjustedX,
-        y: adjustedY
-      });
+    // Sempre priorizar encontrar o ponto real mais próximo
+    const nearestPoint = findNearestPoint(adjustedX, adjustedY);
 
-      // Atualizar tooltip apenas se houver um valor
-      if (value !== null && value !== undefined) {
-        tooltipX.value = ev.clientX;
-        tooltipY.value = ev.clientY;
-        tooltipValue.value = Math.round(value);
-        showTooltip.value = true;
-      } else {
+    if (nearestPoint) {
+      // Usar o valor real do ponto de dados
+      tooltipX.value = ev.clientX;
+      tooltipY.value = ev.clientY;
+      tooltipValue.value = nearestPoint.value;
+      showTooltip.value = true;
+    } else {
+      // Se não encontrar um ponto próximo, calcular o valor com base na escala da legenda
+      try {
+        const rawValue = heatmapInstance.value.getValueAt({
+          x: adjustedX,
+          y: adjustedY
+        });
+
+        if (rawValue !== null && rawValue !== undefined) {
+          // Mapear o valor bruto para a escala real usando os valores min/max da legenda
+          const normalizedValue = mapValueToRange(
+            rawValue,
+            0, 100, // Valores padrão do heatmap
+            legendMin.value, legendMax.value // Escala real dos dados
+          );
+
+          tooltipX.value = ev.clientX;
+          tooltipY.value = ev.clientY;
+          tooltipValue.value = Math.round(normalizedValue * 10) / 10; // Arredondar para 1 casa decimal
+          showTooltip.value = true;
+        } else {
+          showTooltip.value = false;
+        }
+      } catch (error) {
+        console.error('Erro ao obter valor do heatmap:', error);
         showTooltip.value = false;
       }
-    } catch (error) {
-      console.error('Erro ao obter valor do heatmap:', error);
-      showTooltip.value = false;
     }
   }
+};
+
+// Função para mapear um valor de uma escala para outra
+const mapValueToRange = (value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) => {
+  // Calcular a proporção do valor na escala original
+  const proportion = (value - fromMin) / (fromMax - fromMin);
+  // Mapear para a nova escala
+  return toMin + proportion * (toMax - toMin);
+};
+
+// Função para encontrar o ponto mais próximo
+const findNearestPoint = (x: number, y: number) => {
+  if (!data.value || data.value.length === 0) return null;
+
+  const threshold = 30; // Distância máxima para considerar um ponto próximo
+  let nearestPoint = null;
+  let minDistance = Infinity;
+
+  for (const point of data.value) {
+    const dx = point.x - x;
+    const dy = point.y - y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < threshold && distance < minDistance) {
+      minDistance = distance;
+      nearestPoint = point;
+    }
+  }
+
+  return nearestPoint;
 };
 
 // Handler para saída do mouse
@@ -379,5 +535,56 @@ onUnmounted(() => {
   font-weight: bold;
   color: #333;
   white-space: nowrap;
+}
+
+.heatmap-controls {
+  position: absolute;
+  top: 20px;
+  left: 18px;
+  right: 18px;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px 18px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.radius-control {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.radius-control label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+.radius-control input[type="range"] {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  background: #ddd;
+  outline: none;
+  border-radius: 4px;
+}
+
+.radius-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #4CAF50;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.radius-control input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #4CAF50;
+  cursor: pointer;
+  border-radius: 50%;
 }
 </style>
