@@ -20,7 +20,6 @@ const datasets: DatasetMap = {
     name: 'Dataset 1',
     data: mapMockData,
     image: ref('/src/assets/map.jpg')
-
   },
   'dataset2': {
     name: 'Dataset 2',
@@ -32,10 +31,9 @@ const datasets: DatasetMap = {
 const selectedDatasetId = ref('dataset1');
 const heatmapData = ref<DataSet>(datasets[selectedDatasetId.value]);
 
-
-// Handler para mudança de dataset
 const handleDatasetChange = (event: Event) => {
   const select = event.target as HTMLSelectElement;
+  selectedDatasetId.value = select.value;
   heatmapData.value = datasets[select.value];
 };
 </script>
@@ -43,7 +41,7 @@ const handleDatasetChange = (event: Event) => {
 <template>
   <div class="app-container">
     <div class="controls">
-      <select :value="selectedDatasetId" @change="handleDatasetChange" class="dataset-select">
+      <select v-model="selectedDatasetId" @change="handleDatasetChange" class="dataset-select">
         <option v-for="(dataset, id) in datasets" :key="id" :value="id">
           {{ dataset.name }}
         </option>
@@ -60,13 +58,13 @@ const handleDatasetChange = (event: Event) => {
 
 <style>
 .app-container {
-  width: 1200px;
-  height: 1200px;
-  padding: 20px;
-  margin: 0 auto;
+  aspect-ratio: 1;
+  margin: 10vh auto 0 auto;
+  height: 80vh;
   overflow: hidden;
   box-sizing: border-box;
   position: relative;
+  border-radius: 8px;
 }
 
 .controls {
@@ -75,6 +73,7 @@ const handleDatasetChange = (event: Event) => {
   left: 30px;
   z-index: 1000;
   display: flex;
+  font-size: 24px;
   align-items: center;
   gap: 10px;
   background: rgba(255, 255, 255, 0.9);
