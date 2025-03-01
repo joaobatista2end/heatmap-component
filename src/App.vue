@@ -52,6 +52,15 @@ const handleExtremaChange = (min: number, max: number) => {
   maxValue.value = max;
   valueFilter.value = [min, max];
 };
+
+// Novo handler para mudanças no filtro de valores
+const handleValueFilterChange = (values: [number, number]) => {
+  valueFilter.value = values;
+  // Força a atualização do heatmap
+  if (heatmapRef.value) {
+    heatmapRef.value.updateValueFilter(values);
+  }
+};
 </script>
 
 <template>
@@ -107,6 +116,7 @@ const handleExtremaChange = (min: number, max: number) => {
             :min="minValue"
             :max="maxValue"
             :gradient="heatmapRef?.gradientCfg"
+            @change="handleValueFilterChange"
           />
         </div>
       </div>

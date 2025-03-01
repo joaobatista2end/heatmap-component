@@ -533,16 +533,57 @@ onUnmounted(() => {
   cleanupHeatmap();
 });
 
+// Declare a função updateValueFilter antes de usá-la
+const updateValueFilter = (values: [number, number]) => {
+  if (!heatmapInstance.value) return;
+
+  try {
+    // Salvar os dados atuais
+    const currentData = {
+      data: filteredData.value,
+      min: legendMinValue.value,
+      max: legendMaxValue.value
+    };
+
+    // Atualizar o filtro
+    valueFilter.value = values;
+
+    // Atualizar os dados filtrados
+    const filteredPoints = props.data.filter(point =>
+      point.value >= values[0] &&
+      point.value <= values[1]
+    );
+
+    // Se não houver pontos após a filtragem, não atualizar
+    if (filteredPoints.length === 0) {
+      console.warn('Nenhum ponto encontrado no intervalo selecionado');
+      return;
+    }
+
+    // Atualizar o heatmap com os novos dados filtrados
+    heatmapInstance.value.setData({
+      min: currentData.min,
+      max: currentData.max,
+      data: filteredPoints
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar o filtro:', error);
+  }
+};
+
 // Expor valores úteis para os controles externos
 defineExpose({
   legendMin: legendMinValue,
   legendMax: legendMaxValue,
   gradientCfg: gradientConfig,
+  updateValueFilter,
 });
 
-// Atualizar quando as props mudarem
+// Watches
 watch(() => props.radius, updateHeatmapRadius);
-watch(() => props.valueFilter, updateFilteredData);
+watch(() => props.valueFilter, (newValues) => {
+  updateValueFilter(newValues);
+}, { deep: true });
 </script>
 
 <style scoped>
