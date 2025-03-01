@@ -1,5 +1,16 @@
 <template>
   <div ref="containerRef" class="heatmap-container">
+    <!-- Legenda do heatmap -->
+    <div class="heatmap-legend">
+      <div class="legend-gradient-container">
+        <span class="legend-min">{{ legendMin }}</span>
+        <div class="legend-gradient-wrapper">
+          <img ref="gradientImg" class="legend-gradient" alt="Gradient" />
+        </div>
+        <span class="legend-max">{{ legendMax }}</span>
+      </div>
+    </div>
+
     <div id="heatmap" class="heatmap-content">
       <img
         v-if="backgroundImage"
@@ -11,6 +22,15 @@
       />
     </div>
 
+    <!-- Tooltip para mostrar valores -->
+    <div
+      v-if="showTooltip"
+      class="heatmap-tooltip"
+      :style="tooltipStyle"
+    >
+      <strong>{{ tooltipValue }}</strong>
+    </div>
+
     <div v-if="devMode" class="performance-metrics">
       <p>FPS: {{ fps }}</p>
       <p>Frame Time: {{ frameTime.toFixed(2) }}ms</p>
@@ -20,7 +40,7 @@
 
 <script setup lang="ts">
 import type { DataPoint } from "heatmap-ts";
-import { onMounted, onUnmounted, watch, ref } from "vue";
+import { onMounted, onUnmounted, watch, ref, computed } from "vue";
 import { HEATMAP_DEFAULT_CONFIG } from "./conts";
 import type { HeatmapProps } from "./types";
 import "./styles.css";
@@ -49,6 +69,27 @@ const heatmapInstance = ref<HeatMap | null>(null);
 const panzoomInstance = ref<ReturnType<typeof panzoom> | null>(null);
 const dimensions = ref({ width: 0, height: 0 });
 const isInitialized = ref(false);
+const gradientImg = ref<HTMLImageElement | null>(null);
+
+// Tooltip state
+const showTooltip = ref(false);
+const tooltipX = ref(0);
+const tooltipY = ref(0);
+const tooltipValue = ref(0);
+
+// Legend state
+const legendMin = ref(0);
+const legendMax = ref(100);
+const gradientCfg = ref({});
+
+// Computed para estilo do tooltip
+const tooltipStyle = computed(() => {
+  return {
+    left: `${tooltipX.value}px`,
+    top: `${tooltipY.value}px`,
+    display: showTooltip.value ? 'block' : 'none'
+  };
+});
 
 // Função para inicializar o heatmap
 const initHeatmap = () => {
@@ -70,7 +111,9 @@ const initHeatmap = () => {
     ...HEATMAP_DEFAULT_CONFIG,
     ...props.config,
     width: dimensions.value.width,
-    height: dimensions.value.height
+    height: dimensions.value.height,
+    // Adicionar callback para atualizar a legenda
+    onExtremaChange: updateLegend
   });
 
   // Definir dados
@@ -83,7 +126,99 @@ const initHeatmap = () => {
   // Configurar panzoom
   setupPanzoom(heatmapContainer);
 
+  // Configurar eventos para tooltip
+  setupTooltipEvents(heatmapContainer);
+
   isInitialized.value = true;
+};
+
+// Atualizar a legenda
+const updateLegend = (data: any) => {
+  legendMin.value = data.min;
+  legendMax.value = data.max;
+
+  // Regenerar imagem do gradiente
+  if (data.gradient !== gradientCfg.value) {
+    gradientCfg.value = data.gradient;
+
+    // Criar canvas para o gradiente
+    const legendCanvas = document.createElement('canvas');
+    legendCanvas.width = 100;
+    legendCanvas.height = 10;
+    const legendCtx = legendCanvas.getContext('2d');
+
+    if (legendCtx) {
+      const gradient = legendCtx.createLinearGradient(0, 0, 100, 1);
+
+      for (const key in data.gradient) {
+        gradient.addColorStop(parseFloat(key), data.gradient[key]);
+      }
+
+      legendCtx.fillStyle = gradient;
+      legendCtx.fillRect(0, 0, 100, 10);
+
+      if (gradientImg.value) {
+        gradientImg.value.src = legendCanvas.toDataURL();
+      }
+    }
+  }
+};
+
+// Configurar eventos para tooltip
+const setupTooltipEvents = (container: HTMLElement) => {
+  // Remover eventos anteriores para evitar duplicação
+  if (containerRef.value) {
+    containerRef.value.removeEventListener('mousemove', handleMouseMove);
+    containerRef.value.removeEventListener('mouseout', handleMouseOut);
+  }
+
+  // Adicionar novos eventos
+  containerRef.value?.addEventListener('mousemove', handleMouseMove);
+  containerRef.value?.addEventListener('mouseout', handleMouseOut);
+};
+
+// Handler para movimento do mouse
+const handleMouseMove = (ev: MouseEvent) => {
+  if (!heatmapInstance.value || !containerRef.value) return;
+
+  // Obter a posição relativa ao container
+  const rect = containerRef.value.getBoundingClientRect();
+  const x = ev.clientX - rect.left;
+  const y = ev.clientY - rect.top;
+
+  // Ajustar coordenadas com base na transformação do panzoom
+  const transform = panzoomInstance.value?.getTransform();
+  if (transform) {
+    // Calcular coordenadas ajustadas para o panzoom
+    const adjustedX = (x - transform.x) / transform.scale;
+    const adjustedY = (y - transform.y) / transform.scale;
+
+    try {
+      // Obter o valor na posição ajustada
+      const value = heatmapInstance.value.getValueAt({
+        x: adjustedX,
+        y: adjustedY
+      });
+
+      // Atualizar tooltip apenas se houver um valor
+      if (value !== null && value !== undefined) {
+        tooltipX.value = ev.clientX;
+        tooltipY.value = ev.clientY;
+        tooltipValue.value = Math.round(value);
+        showTooltip.value = true;
+      } else {
+        showTooltip.value = false;
+      }
+    } catch (error) {
+      console.error('Erro ao obter valor do heatmap:', error);
+      showTooltip.value = false;
+    }
+  }
+};
+
+// Handler para saída do mouse
+const handleMouseOut = () => {
+  showTooltip.value = false;
 };
 
 // Configurar panzoom
@@ -118,6 +253,9 @@ const setupPanzoom = (container: HTMLElement) => {
       container.style.transform = matrix;
       heatmapInstance.value.renderer.canvas.style.transform = 'none';
     }
+
+    // Esconder tooltip durante transformações
+    showTooltip.value = false;
   });
 };
 
@@ -154,6 +292,9 @@ const cleanupHeatmap = () => {
       content.forEach(child => heatmapContainer.appendChild(child));
     }
   }
+
+  // Esconder tooltip
+  showTooltip.value = false;
 };
 
 // Handler para carregamento da imagem
@@ -185,3 +326,58 @@ onUnmounted(() => {
   cleanupHeatmap();
 });
 </script>
+
+<style>
+.heatmap-tooltip {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: sans-serif;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translate(15px, -30px); /* Deslocamento para não cobrir o cursor */
+}
+
+.heatmap-legend {
+  position: absolute;
+  bottom: 20px;
+  left: 18px;
+  right: 18px;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px 18px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.legend-gradient-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.legend-gradient-wrapper {
+  flex: 1;
+  margin: 0 15px;
+}
+
+.legend-gradient {
+  width: 100%;
+  height: 20px;
+  border: 1px solid #ccc;
+  display: block;
+}
+
+.legend-min, .legend-max {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  white-space: nowrap;
+}
+</style>
