@@ -25,6 +25,39 @@
         </div>
         <span class="legend-max">{{ legendMax }}</span>
       </div>
+
+      <!-- Filtro de valores -->
+      <div class="value-filter" @mousedown.stop @touchstart.stop>
+        <div class="filter-values">
+          <span>Min: <input type="number" v-model.number="valueFilter[0]" @change="updateFilteredData" :min="legendMin" :max="valueFilter[1]" :step="calculateStep()" /></span>
+          <span>Max: <input type="number" v-model.number="valueFilter[1]" @change="updateFilteredData" :min="valueFilter[0]" :max="legendMax" :step="calculateStep()" /></span>
+        </div>
+        <div class="range-slider-container">
+          <div class="slider-track"></div>
+          <input
+            type="range"
+            class="range-min"
+            :min="legendMin"
+            :max="legendMax"
+            :step="calculateStep()"
+            v-model.number="valueFilter[0]"
+            @input="updateMinFilter"
+            @mousedown.stop
+            @touchstart.stop
+          />
+          <input
+            type="range"
+            class="range-max"
+            :min="legendMin"
+            :max="legendMax"
+            :step="calculateStep()"
+            v-model.number="valueFilter[1]"
+            @input="updateMaxFilter"
+            @mousedown.stop
+            @touchstart.stop
+          />
+        </div>
+      </div>
     </div>
 
     <div id="heatmap" class="heatmap-content">
@@ -101,6 +134,15 @@ const legendMin = ref(0);
 const legendMax = ref(100);
 const gradientCfg = ref({});
 
+// Filtro de valores
+const valueFilter = ref<[number, number]>([0, 100]);
+const filteredData = computed(() => {
+  return data.value.filter(point =>
+    point.value >= valueFilter.value[0] &&
+    point.value <= valueFilter.value[1]
+  );
+});
+
 // Computed para estilo do tooltip
 const tooltipStyle = computed(() => {
   return {
@@ -110,6 +152,67 @@ const tooltipStyle = computed(() => {
   };
 });
 
+// Calcular o passo apropriado para o slider
+const calculateStep = () => {
+  const range = Math.abs(legendMax.value - legendMin.value);
+  // Usar um passo maior para intervalos maiores
+  return Math.max(range / 100, 0.1);
+};
+
+// Atualizar o valor mínimo do filtro
+const updateMinFilter = (event: Event) => {
+  event.stopPropagation();
+
+  // Garantir que o valor mínimo não seja maior que o máximo
+  if (valueFilter.value[0] > valueFilter.value[1]) {
+    valueFilter.value[0] = valueFilter.value[1];
+  }
+
+  // Usar setTimeout para evitar problemas de concorrência
+  setTimeout(() => {
+    updateFilteredData();
+  }, 0);
+};
+
+// Atualizar o valor máximo do filtro
+const updateMaxFilter = (event: Event) => {
+  event.stopPropagation();
+
+  // Garantir que o valor máximo não seja menor que o mínimo
+  if (valueFilter.value[1] < valueFilter.value[0]) {
+    valueFilter.value[1] = valueFilter.value[0];
+  }
+
+  // Usar setTimeout para evitar problemas de concorrência
+  setTimeout(() => {
+    updateFilteredData();
+  }, 0);
+};
+
+// Atualizar os dados filtrados
+const updateFilteredData = () => {
+  // Atualizar o heatmap com os dados filtrados
+  if (heatmapInstance.value) {
+    const filteredPoints = data.value.filter(point =>
+      point.value >= valueFilter.value[0] &&
+      point.value <= valueFilter.value[1]
+    );
+
+    // Se não houver pontos após a filtragem, não atualizar
+    if (filteredPoints.length === 0) {
+      console.warn('Nenhum ponto encontrado no intervalo selecionado');
+      return;
+    }
+
+    // Usar os valores originais min/max para manter a escala de cores consistente
+    heatmapInstance.value.setData({
+      min: legendMin.value,
+      max: legendMax.value,
+      data: filteredPoints
+    });
+  }
+};
+
 // Função para atualizar o raio do heatmap
 const updateHeatmapRadius = () => {
   if (!heatmapInstance.value) return;
@@ -117,7 +220,7 @@ const updateHeatmapRadius = () => {
   try {
     // Salvar os dados atuais
     const currentData = {
-      data: data.value,
+      data: filteredData.value,
       min: legendMin.value,
       max: legendMax.value
     };
@@ -192,6 +295,9 @@ const initHeatmap = () => {
   legendMin.value = min;
   legendMax.value = max;
 
+  // Inicializar o filtro de valores com o intervalo completo
+  valueFilter.value = [min, max];
+
   // Criar nova instância com configuração para valores negativos
   heatmapInstance.value = new HeatMap({
     container: heatmapContainer,
@@ -212,7 +318,7 @@ const initHeatmap = () => {
   heatmapInstance.value.setData({
     max: max,
     min: min,
-    data: data.value
+    data: filteredData.value
   });
 
   // Configurar panzoom
@@ -358,7 +464,14 @@ const findNearestPoint = (x: number, y: number) => {
   let nearestPoint = null;
   let minDistance = Infinity;
 
-  for (const point of data.value) {
+  // Filtrar apenas os pontos dentro do intervalo selecionado
+  const visiblePoints = data.value.filter(point =>
+    point.value >= valueFilter.value[0] &&
+    point.value <= valueFilter.value[1]
+  );
+
+  // Buscar o ponto mais próximo apenas entre os pontos visíveis
+  for (const point of visiblePoints) {
     const dx = point.x - x;
     const dy = point.y - y;
     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -509,6 +622,7 @@ onUnmounted(() => {
   padding: 10px 18px;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  pointer-events: auto; /* Garantir que a legenda capture eventos */
 }
 
 .legend-gradient-container {
@@ -586,5 +700,96 @@ onUnmounted(() => {
   background: #4CAF50;
   cursor: pointer;
   border-radius: 50%;
+}
+
+.value-filter {
+  margin-top: 15px;
+  width: 100%;
+}
+
+.filter-values {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.filter-values input {
+  width: 60px;
+  padding: 2px 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.range-slider-container {
+  position: relative;
+  height: 40px;
+  width: 100%;
+}
+
+.slider-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: #ddd;
+  border-radius: 4px;
+  transform: translateY(-50%);
+}
+
+.range-slider-container input[type="range"] {
+  position: absolute;
+  width: 100%;
+  height: 30px;
+  -webkit-appearance: none;
+  background: transparent;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.range-slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #4CAF50;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.range-slider-container input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #4CAF50;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.range-slider-container input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.range-slider-container input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.range-min {
+  z-index: 1;
+}
+
+.range-max {
+  z-index: 2;
 }
 </style>
