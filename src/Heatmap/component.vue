@@ -1,65 +1,5 @@
 <template>
   <div ref="containerRef" class="heatmap-container">
-    <!-- Controles do heatmap -->
-    <div class="heatmap-controls">
-      <div class="radius-control">
-        <label for="radius-slider">Área de influência: {{ radius }}</label>
-        <input
-          id="radius-slider"
-          type="range"
-          min="5"
-          max="100"
-          step="5"
-          v-model.number="radius"
-          @input="debouncedUpdateRadius"
-        />
-      </div>
-    </div>
-
-    <!-- Legenda do heatmap -->
-    <div class="heatmap-legend">
-      <div class="legend-gradient-container">
-        <span class="legend-min">{{ legendMin }}</span>
-        <div class="legend-gradient-wrapper">
-          <img ref="gradientImg" class="legend-gradient" alt="Gradient" />
-        </div>
-        <span class="legend-max">{{ legendMax }}</span>
-      </div>
-
-      <!-- Filtro de valores -->
-      <div class="value-filter" @mousedown.stop @touchstart.stop>
-        <div class="filter-values">
-          <span>Min: <input type="number" v-model.number="valueFilter[0]" @change="updateFilteredData" :min="legendMin" :max="valueFilter[1]" :step="calculateStep()" /></span>
-          <span>Max: <input type="number" v-model.number="valueFilter[1]" @change="updateFilteredData" :min="valueFilter[0]" :max="legendMax" :step="calculateStep()" /></span>
-        </div>
-        <div class="range-slider-container">
-          <div class="slider-track"></div>
-          <input
-            type="range"
-            class="range-min"
-            :min="legendMin"
-            :max="legendMax"
-            :step="calculateStep()"
-            v-model.number="valueFilter[0]"
-            @input="updateMinFilter"
-            @mousedown.stop
-            @touchstart.stop
-          />
-          <input
-            type="range"
-            class="range-max"
-            :min="legendMin"
-            :max="legendMax"
-            :step="calculateStep()"
-            v-model.number="valueFilter[1]"
-            @input="updateMaxFilter"
-            @mousedown.stop
-            @touchstart.stop
-          />
-        </div>
-      </div>
-    </div>
-
     <div id="heatmap" class="heatmap-content">
       <img
         v-if="backgroundImage"
@@ -77,7 +17,7 @@
       class="heatmap-tooltip"
       :style="tooltipStyle"
     >
-      <strong>{{ typeof tooltipValue === 'number' ? tooltipValue : tooltipValue }}</strong>
+      <strong>{{ tooltipValue }}</strong>
     </div>
 
     <div v-if="devMode" class="performance-metrics">
@@ -91,23 +31,35 @@
 import type { DataPoint } from "heatmap-ts";
 import { onMounted, onUnmounted, watch, ref, computed } from "vue";
 import { HEATMAP_DEFAULT_CONFIG } from "./conts";
-import type { HeatmapProps } from "./types";
+import type { Config, HeatmapProps } from "./types";
 import "./styles.css";
 import { usePerformanceMetrics } from "./composables/usePerformanceMetrics";
 import HeatMap from "heatmap-ts";
 import panzoom from "panzoom";
 import { CURSOR_DEFAULT_STYLES, PANZOOM_DEFAULT_CONFIG } from "./conts";
 
-const props = withDefaults(defineProps<Omit<HeatmapProps, "dataValue">>(), {
+// Importar os componentes
+import RadiusControl from './components/RadiusControl.vue';
+import ValuesControl from './components/ValuesControl.vue';
+
+const props = withDefaults(defineProps<{
+  config?: Config;
+  backgroundImage?: string | null;
+  devMode?: boolean;
+  data: DataPoint[];
+  radius: number;
+  valueFilter: [number, number];
+}>(), {
   config: () => HEATMAP_DEFAULT_CONFIG,
   backgroundImage: null,
   devMode: true,
 });
 
-const data = defineModel("data", {
-  type: Array<DataPoint>,
-  default: () => [],
-});
+const emit = defineEmits<{
+  (e: 'update:radius', value: number): void;
+  (e: 'update:valueFilter', value: [number, number]): void;
+  (e: 'extremaChange', min: number, max: number): void;
+}>();
 
 const { fps, frameTime } = usePerformanceMetrics();
 
@@ -120,9 +72,6 @@ const dimensions = ref({ width: 0, height: 0 });
 const isInitialized = ref(false);
 const gradientImg = ref<HTMLImageElement | null>(null);
 
-// Controle de raio
-const radius = ref(30); // Valor inicial do raio
-
 // Tooltip state
 const showTooltip = ref(false);
 const tooltipX = ref(0);
@@ -130,14 +79,14 @@ const tooltipY = ref(0);
 const tooltipValue = ref(0);
 
 // Legend state
-const legendMin = ref(0);
-const legendMax = ref(100);
-const gradientCfg = ref({});
+const legendMinValue = ref(0);
+const legendMaxValue = ref(100);
+const gradientConfig = ref({});
 
 // Filtro de valores
 const valueFilter = ref<[number, number]>([0, 100]);
 const filteredData = computed(() => {
-  return data.value.filter(point =>
+  return props.data.filter(point =>
     point.value >= valueFilter.value[0] &&
     point.value <= valueFilter.value[1]
   );
@@ -154,7 +103,7 @@ const tooltipStyle = computed(() => {
 
 // Calcular o passo apropriado para o slider
 const calculateStep = () => {
-  const range = Math.abs(legendMax.value - legendMin.value);
+  const range = Math.abs(legendMaxValue.value - legendMinValue.value);
   // Usar um passo maior para intervalos maiores
   return Math.max(range / 100, 0.1);
 };
@@ -193,7 +142,7 @@ const updateMaxFilter = (event: Event) => {
 const updateFilteredData = () => {
   // Atualizar o heatmap com os dados filtrados
   if (heatmapInstance.value) {
-    const filteredPoints = data.value.filter(point =>
+    const filteredPoints = props.data.filter(point =>
       point.value >= valueFilter.value[0] &&
       point.value <= valueFilter.value[1]
     );
@@ -206,8 +155,8 @@ const updateFilteredData = () => {
 
     // Usar os valores originais min/max para manter a escala de cores consistente
     heatmapInstance.value.setData({
-      min: legendMin.value,
-      max: legendMax.value,
+      min: legendMinValue.value,
+      max: legendMaxValue.value,
       data: filteredPoints
     });
   }
@@ -221,8 +170,8 @@ const updateHeatmapRadius = () => {
     // Salvar os dados atuais
     const currentData = {
       data: filteredData.value,
-      min: legendMin.value,
-      max: legendMax.value
+      min: legendMinValue.value,
+      max: legendMaxValue.value
     };
 
     // Limpar a instância atual
@@ -246,8 +195,8 @@ const updateHeatmapRadius = () => {
       onExtremaChange: updateLegend,
       useValueExtent: true,
       valueExtent: [currentData.min, currentData.max],
-      radius: radius.value // Usar o novo valor do raio
-    });
+      radius: props.radius // Usar o novo valor do raio
+    } as Config);
 
     // Definir os mesmos dados
     heatmapInstance.value.setData(currentData);
@@ -259,19 +208,6 @@ const updateHeatmapRadius = () => {
   } catch (error) {
     console.error('Erro ao atualizar o raio do heatmap:', error);
   }
-};
-
-// Adicionar um debounce para evitar muitas atualizações durante o arrasto do slider
-let debounceTimeout: number | null = null;
-const debouncedUpdateRadius = () => {
-  if (debounceTimeout) {
-    clearTimeout(debounceTimeout);
-  }
-
-  debounceTimeout = window.setTimeout(() => {
-    updateHeatmapRadius();
-    debounceTimeout = null;
-  }, 100); // 100ms de debounce
 };
 
 // Função para inicializar o heatmap
@@ -289,11 +225,11 @@ const initHeatmap = () => {
   heatmapContainer.style.height = `${dimensions.value.height}px`;
 
   // Calcular valores mínimo e máximo reais dos dados
-  const { min, max } = calculateDataExtremes(data.value);
+  const { min, max } = calculateDataExtremes(props.data);
 
   // Atualizar valores da legenda diretamente
-  legendMin.value = min;
-  legendMax.value = max;
+  legendMinValue.value = min;
+  legendMaxValue.value = max;
 
   // Inicializar o filtro de valores com o intervalo completo
   valueFilter.value = [min, max];
@@ -311,8 +247,8 @@ const initHeatmap = () => {
     useValueExtent: true,
     valueExtent: [min, max],
     // Usar o raio definido pelo usuário
-    radius: radius.value
-  });
+    radius: props.radius
+  } as Config);
 
   // Definir dados com valores mínimo e máximo reais
   heatmapInstance.value.setData({
@@ -349,12 +285,12 @@ const calculateDataExtremes = (points: DataPoint[]) => {
 
 // Atualizar a legenda
 const updateLegend = (data: any) => {
-  legendMin.value = data.min;
-  legendMax.value = data.max;
+  legendMinValue.value = data.min;
+  legendMaxValue.value = data.max;
 
   // Regenerar imagem do gradiente
-  if (data.gradient !== gradientCfg.value) {
-    gradientCfg.value = data.gradient;
+  if (data.gradient !== gradientConfig.value) {
+    gradientConfig.value = data.gradient;
 
     // Criar canvas para o gradiente
     const legendCanvas = document.createElement('canvas');
@@ -430,7 +366,7 @@ const handleMouseMove = (ev: MouseEvent) => {
           const normalizedValue = mapValueToRange(
             rawValue,
             0, 100, // Valores padrão do heatmap
-            legendMin.value, legendMax.value // Escala real dos dados
+            legendMinValue.value, legendMaxValue.value // Escala real dos dados
           );
 
           tooltipX.value = ev.clientX;
@@ -458,14 +394,14 @@ const mapValueToRange = (value: number, fromMin: number, fromMax: number, toMin:
 
 // Função para encontrar o ponto mais próximo
 const findNearestPoint = (x: number, y: number) => {
-  if (!data.value || data.value.length === 0) return null;
+  if (!props.data || props.data.length === 0) return null;
 
   const threshold = 30; // Distância máxima para considerar um ponto próximo
   let nearestPoint = null;
   let minDistance = Infinity;
 
   // Filtrar apenas os pontos dentro do intervalo selecionado
-  const visiblePoints = data.value.filter(point =>
+  const visiblePoints = props.data.filter(point =>
     point.value >= valueFilter.value[0] &&
     point.value <= valueFilter.value[1]
   );
@@ -580,7 +516,7 @@ const handleImageLoad = () => {
 };
 
 // Observar mudanças nos dados
-watch(data, () => {
+watch(() => props.data, () => {
   if (isInitialized.value) {
     initHeatmap(); // Recriar completamente o heatmap quando os dados mudarem
   }
@@ -588,208 +524,65 @@ watch(data, () => {
 
 // Lifecycle hooks
 onMounted(() => {
-  // Inicialização será feita após o carregamento da imagem
+  if (props.data.length > 0) {
+    initHeatmap();
+  }
 });
 
 onUnmounted(() => {
   cleanupHeatmap();
 });
+
+// Expor valores úteis para os controles externos
+defineExpose({
+  legendMin: legendMinValue,
+  legendMax: legendMaxValue,
+  gradientCfg: gradientConfig,
+});
+
+// Atualizar quando as props mudarem
+watch(() => props.radius, updateHeatmapRadius);
+watch(() => props.valueFilter, updateFilteredData);
 </script>
 
-<style>
-.heatmap-tooltip {
-  position: fixed;
-  z-index: 1000;
-  pointer-events: none;
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: bold;
-  font-family: sans-serif;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transform: translate(15px, -30px); /* Deslocamento para não cobrir o cursor */
-}
-
-.heatmap-legend {
-  position: absolute;
-  bottom: 20px;
-  left: 18px;
-  right: 18px;
-  z-index: 1000;
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 10px 18px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  pointer-events: auto; /* Garantir que a legenda capture eventos */
-}
-
-.legend-gradient-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.legend-gradient-wrapper {
-  flex: 1;
-  margin: 0 15px;
-}
-
-.legend-gradient {
-  width: 100%;
-  height: 20px;
-  border: 1px solid #ccc;
-  display: block;
-}
-
-.legend-min, .legend-max {
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-  white-space: nowrap;
-}
-
-.heatmap-controls {
-  position: absolute;
-  top: 20px;
-  left: 18px;
-  right: 18px;
-  z-index: 1000;
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 10px 18px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.radius-control {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.radius-control label {
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-}
-
-.radius-control input[type="range"] {
-  width: 100%;
-  height: 8px;
-  -webkit-appearance: none;
-  background: #ddd;
-  outline: none;
-  border-radius: 4px;
-}
-
-.radius-control input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  background: #4CAF50;
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-.radius-control input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  background: #4CAF50;
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-.value-filter {
-  margin-top: 15px;
-  width: 100%;
-}
-
-.filter-values {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.filter-values input {
-  width: 60px;
-  padding: 2px 5px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
-
-.range-slider-container {
+<style scoped>
+.heatmap-container {
   position: relative;
-  height: 40px;
   width: 100%;
+  height: 100%;
 }
 
-.slider-track {
+.heatmap-content {
+  width: 100%;
+  height: 100%;
+}
+
+.heatmap-background {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.heatmap-tooltip {
   position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 8px;
-  background: #ddd;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
   border-radius: 4px;
-  transform: translateY(-50%);
+  font-size: 12px;
+  z-index: 1000;
 }
 
-.range-slider-container input[type="range"] {
+.performance-metrics {
   position: absolute;
-  width: 100%;
-  height: 30px;
-  -webkit-appearance: none;
-  background: transparent;
-  pointer-events: auto;
-  z-index: 10;
-}
-
-.range-slider-container input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  background: #4CAF50;
-  cursor: pointer;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.range-slider-container input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  background: #4CAF50;
-  cursor: pointer;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.range-slider-container input[type="range"]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 8px;
-  background: transparent;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px;
   border-radius: 4px;
-  cursor: pointer;
-}
-
-.range-slider-container input[type="range"]::-moz-range-track {
-  width: 100%;
-  height: 8px;
-  background: transparent;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.range-min {
-  z-index: 1;
-}
-
-.range-max {
-  z-index: 2;
+  font-size: 12px;
+  z-index: 1000;
 }
 </style>
